@@ -1,5 +1,5 @@
 
-var url = '/test.webm';
+var url = 'test.webm';
 var el = document.querySelector('#video');
 var player = Slant(el, {
   src: url,
