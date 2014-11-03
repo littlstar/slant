@@ -82,3 +82,25 @@ Player.prototype.use = function (fn) {
   fn(this);
   return this;
 };
+
+/**
+ * Show video player
+ *
+ * @api public
+ */
+
+Player.prototype.show = function () {
+  this.el.style.display = '';
+  return this;
+};
+
+/*
+ * Hide video player
+ *
+ * @api public
+ */
+
+Player.prototype.hide = function () {
+  this.el.style.display = 'none';
+  return this;
+};

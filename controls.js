@@ -24,11 +24,42 @@ function Controls (frame, opts) {
   this.events.bind('click .play', 'onplayclick');
   this.events.bind('click .pause', 'onplayclick');
   this.events.bind('click .mute', 'onplaymute');
-  console.log(this.events)
 }
 
 // inherit from emitter
 emitter(Controls.prototype);
+
+/**
+ * `onplayclick' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onplayclick = function (e) {
+  var play = this.el.querySelector('.play');
+  var paused = Boolean(this.frame.video.pause);
+  e.preventDefault();
+
+  if (true == paused) {
+    play.classList.remove('pause')
+  } else {
+    play.classList.add('pause')
+  }
+
+  this.toggle();
+};
+
+/**
+ * `onplaymute' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onplaymute = function (e) {
+
+};
 
 /**
  * Plays the frame. Usually called from
@@ -71,36 +102,23 @@ Controls.prototype.toggle = function () {
 };
 
 /**
- * `onplayclick' event handler
+ * Show frame controls
  *
- * @api private
- * @param {Event} e
+ * @api public
  */
 
-Controls.prototype.onplayclick = function (e) {
-  var play = this.el.querySelector('.play');
-  var paused = Boolean(this.frame.video.pause);
-  e.preventDefault();
-
-  console.log('click')
-
-  if (true == paused) {
-    play.classList.remove('pause')
-  } else {
-    play.classList.add('pause')
-  }
-
-  this.toggle();
+Controls.prototype.show = function () {
+  this.el.style.display = 'block';
+  return this;
 };
 
-/**
- * `onplaymute' event handler
+/*
+ * Hide frame controls
  *
- * @api private
- * @param {Event} e
+ * @api public
  */
 
-Controls.prototype.onplaymute = function (e) {
-
+Controls.prototype.hide = function () {
+  this.el.style.display = 'none';
+  return this;
 };
-
