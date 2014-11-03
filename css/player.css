@@ -1,0 +1,9 @@
+
+.slant.player {
+  display: inline-block;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  -webkit-animation-name: slant-fade;
+  animation-name: slant-fade;
+}

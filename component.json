@@ -1,0 +1,31 @@
+{
+  "name": "slant",
+  "version": "0.0.1",
+  "description": "360 Video Player",
+  "main": "index.js",
+  "dependencies": {
+    "components/font-awesome": "*",
+    "component/emitter": "*",
+    "component/events": "*",
+    "component/domify": "*",
+    "component/raf": "*"
+  },
+  "scripts": [
+    "vendor/three.js",
+    "controls.js",
+    "player.js",
+    "frame.js",
+    "index.js"
+  ],
+  "styles": [
+    "css/controls.css",
+    "css/player.css",
+    "css/slant.css",
+    "css/frame.css"
+  ],
+  "templates": [
+    "views/controls.html",
+    "views/player.html",
+    "views/frame.html"
+  ]
+}
