@@ -4,28 +4,9 @@
   "description": "360 Video Player",
   "main": "index.js",
   "dependencies": {
-    "components/font-awesome": "*",
-    "component/emitter": "*",
-    "component/events": "*",
-    "component/domify": "*",
-    "component/raf": "*"
+    "littlstar/slant-frame": "*"
   },
-  "scripts": [
-    "vendor/three.js",
-    "controls.js",
-    "player.js",
-    "frame.js",
-    "index.js"
-  ],
-  "styles": [
-    "css/controls.css",
-    "css/player.css",
-    "css/slant.css",
-    "css/frame.css"
-  ],
-  "templates": [
-    "views/controls.html",
-    "views/player.html",
-    "views/frame.html"
-  ]
+  "scripts": ["index.js"],
+  "styles": ["slant.css"],
+  "templates": ["template.html"]
 }
