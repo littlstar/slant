@@ -106,7 +106,7 @@
 }
 
 .slant.controls ul li.playpause a.pause {
-  text-align: right;
+  left: 2%;
 }
 
 .slant.controls ul li.playpause a.replay {

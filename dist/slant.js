@@ -2128,13 +2128,13 @@ exports.cancel = function(id){
 
 });
 
-require.register("littlstar~slant-controls@0.0.6", function (exports, module) {
+require.register("littlstar~slant-controls@0.0.7", function (exports, module) {
 
 /**
  * Module dependencies
  */
 
-var tpl = require('littlstar~slant-controls@0.0.6/template.html')
+var tpl = require('littlstar~slant-controls@0.0.7/template.html')
   , dom = require('component~domify@1.3.1')
   , events = require('component~events@1.0.9')
   , emitter = require('component~emitter@1.1.3')
@@ -2684,7 +2684,7 @@ Controls.prototype.hide = function () {
 
 });
 
-require.define("littlstar~slant-controls@0.0.6/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n      <a href=\"#\" class=\"replay fadeIn hidden\">&#10227;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"gutter\"></span>\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <span class=\"control\">vol</span>\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
+require.define("littlstar~slant-controls@0.0.7/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n      <a href=\"#\" class=\"replay fadeIn hidden\">&#10227;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"gutter\"></span>\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <span class=\"control\">vol</span>\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
 
 require.register("components~three.js@0.0.69", function (exports, module) {
 // File:src/Three.js
@@ -38004,7 +38004,7 @@ require.register("littlstar~slant-player@0.0.1", function (exports, module) {
 var tpl = require('littlstar~slant-player@0.0.1/template.html')
   , dom = require('component~domify@1.3.1')
   , Frame = require('littlstar~slant-frame@0.0.4')
-  , Controls = require('littlstar~slant-controls@0.0.6')
+  , Controls = require('littlstar~slant-controls@0.0.7')
   , emitter = require('component~emitter@1.1.3')
 
 /**
