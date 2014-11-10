@@ -2128,13 +2128,13 @@ exports.cancel = function(id){
 
 });
 
-require.register("littlstar~slant-controls@0.0.4", function (exports, module) {
+require.register("littlstar~slant-controls@0.0.6", function (exports, module) {
 
 /**
  * Module dependencies
  */
 
-var tpl = require('littlstar~slant-controls@0.0.4/template.html')
+var tpl = require('littlstar~slant-controls@0.0.6/template.html')
   , dom = require('component~domify@1.3.1')
   , events = require('component~events@1.0.9')
   , emitter = require('component~emitter@1.1.3')
@@ -2207,12 +2207,14 @@ function Controls (frame, opts) {
   this.el = dom(tpl);
   this.scrubbing = false;
   this.ready = false;
+  this.paused = true;
   this.muted = frame.video.muted;
   this.events = events(this.el, this);
   this.events.bind('click', 'onclick');
 
   // play/pause handles
   this.events.bind('click .playpause .play', 'onplayclick');
+  this.events.bind('click .playpause .replay', 'onplayclick');
   this.events.bind('click .playpause .pause', 'onplayclick');
 
   // track scrubbing
@@ -2325,9 +2327,23 @@ function Controls (frame, opts) {
   });
 
   this.frame.on('timeupdate', function (e) {
+    var replay = self.el.querySelector('.playpause .replay');
     // update played progress bar
     played.style.width = e.percent + '%';
+    replay.classList.add('hidden');
     update();
+  });
+
+  this.frame.on('end', function () {
+    var play = self.el.querySelector('.playpause .play');
+    var pause = self.el.querySelector('.playpause .pause');
+    var replay = self.el.querySelector('.playpause .replay');
+
+    play.classList.add('hidden');
+    pause.classList.add('hidden');
+    replay.classList.remove('hidden');
+
+    self.paused = true;
   });
 
   function update () {
@@ -2382,11 +2398,17 @@ Controls.prototype.onclick = function (e) {
 
 Controls.prototype.onplayclick = function (e) {
   var play = this.el.querySelector('.play');
+  var replay = this.el.querySelector('.replay');
   var paused = Boolean(this.frame.video.paused);
+
   e.preventDefault();
 
   this.toggle();
   this.paused = Boolean(this.frame.video.paused);
+
+  if (e.target == replay) {
+    this.emit('replay');
+  }
 };
 
 /**
@@ -2465,6 +2487,9 @@ Controls.prototype.onscrubclick = function (e) {
 
   this.scrubbing = false;
   this.seek(s);
+  if (true == this.paused) {
+    this.play();
+  }
   this.emit('scrubend', e);
 };
 
@@ -2477,6 +2502,7 @@ Controls.prototype.onscrubclick = function (e) {
 
 Controls.prototype.play = function () {
   this.el.querySelector('.play').classList.add('hidden');
+  this.el.querySelector('.replay').classList.add('hidden');
   this.el.querySelector('.pause').classList.remove('hidden');
   this.frame.play();
   this.emit('play');
@@ -2658,7 +2684,7 @@ Controls.prototype.hide = function () {
 
 });
 
-require.define("littlstar~slant-controls@0.0.4/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"gutter\"></span>\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <span class=\"control\">vol</span>\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
+require.define("littlstar~slant-controls@0.0.6/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n      <a href=\"#\" class=\"replay fadeIn hidden\">&#10227;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"gutter\"></span>\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <span class=\"control\">vol</span>\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
 
 require.register("components~three.js@0.0.69", function (exports, module) {
 // File:src/Three.js
@@ -37978,7 +38004,7 @@ require.register("littlstar~slant-player@0.0.1", function (exports, module) {
 var tpl = require('littlstar~slant-player@0.0.1/template.html')
   , dom = require('component~domify@1.3.1')
   , Frame = require('littlstar~slant-frame@0.0.4')
-  , Controls = require('littlstar~slant-controls@0.0.4')
+  , Controls = require('littlstar~slant-controls@0.0.6')
   , emitter = require('component~emitter@1.1.3')
 
 /**
