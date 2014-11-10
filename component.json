@@ -4,9 +4,23 @@
   "description": "360 Video Player",
   "main": "index.js",
   "dependencies": {
-    "littlstar/slant-frame": "*"
+    "littlstar/slant-player": "*",
+    "component/emitter": "*",
+    "component/dialog": "*",
+    "component/domify": "*"
   },
-  "scripts": ["index.js"],
-  "styles": ["slant.css"],
-  "templates": ["template.html"]
+
+  "scripts": [
+    "index.js",
+    "dialog.js"
+  ],
+
+  "styles": [
+    "slant.css",
+    "dialog.css"
+  ],
+
+  "templates": [
+    "template.html"
+  ]
 }

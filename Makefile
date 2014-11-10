@@ -6,9 +6,9 @@ components:
 	component install
 
 dist: components
-	component build -s Slant
-	rm -f slant.{js,css}
-	cp build/build.js slant.js
-	cp build/build.css slant.css
+	component build -s slant -o dist/ -n slant
 
-.PHONY: build
+clean:
+	rm -rf build
+
+.PHONY: build dist

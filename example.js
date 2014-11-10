@@ -1,11 +1,10 @@
 
-var url = 'test.webm';
 var el = document.querySelector('#video');
-var player = Slant(el, {
-  src: url,
-  height: 400,
-  width: 801,
-  fov: 28
+var video = slant.createPlayer(el, {
+  //src: 'video.mp4'
+  src: 'test.webm'
 });
 
+console.log(getComputedStyle(el))
+video.render();
 
