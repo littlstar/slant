@@ -119,6 +119,7 @@ SlantVideo.prototype.render = function () {
 
     this.emit('render');
   }
+
   return this;
 };
 

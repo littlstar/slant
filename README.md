@@ -1,15 +1,9 @@
 slant
 =====
 
-Minimal 360 Video Player
+Extendable 360 Video Player
 
 ## install
-
-**npm:**
-
-```js
-$ npm install slant
-```
 
 **component:**
 
@@ -20,15 +14,13 @@ $ component install littlstar/slant
 ## usage
 
 ```js
-var src = '/test.webm';
+var src = '360-video.mp4';
 var el = document.querySelector('#video');
-var player = Slant(el, {
-  src: src,
-  height: 400,
-  width: 800,
-  fov: 28
-});
+var video = slant.createPlayer(el, {src: src});
 
+video
+.render()
+.play();
 ```
 
 ## documentation
