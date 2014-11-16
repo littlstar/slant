@@ -138,174 +138,6 @@ require.define = function (name, exports) {
     exports: exports
   };
 };
-require.register("component~emitter@1.1.2", function (exports, module) {
-
-/**
- * Expose `Emitter`.
- */
-
-module.exports = Emitter;
-
-/**
- * Initialize a new `Emitter`.
- *
- * @api public
- */
-
-function Emitter(obj) {
-  if (obj) return mixin(obj);
-};
-
-/**
- * Mixin the emitter properties.
- *
- * @param {Object} obj
- * @return {Object}
- * @api private
- */
-
-function mixin(obj) {
-  for (var key in Emitter.prototype) {
-    obj[key] = Emitter.prototype[key];
-  }
-  return obj;
-}
-
-/**
- * Listen on the given `event` with `fn`.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.on =
-Emitter.prototype.addEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-  (this._callbacks[event] = this._callbacks[event] || [])
-    .push(fn);
-  return this;
-};
-
-/**
- * Adds an `event` listener that will be invoked a single
- * time then automatically removed.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.once = function(event, fn){
-  var self = this;
-  this._callbacks = this._callbacks || {};
-
-  function on() {
-    self.off(event, on);
-    fn.apply(this, arguments);
-  }
-
-  on.fn = fn;
-  this.on(event, on);
-  return this;
-};
-
-/**
- * Remove the given callback for `event` or all
- * registered callbacks.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.off =
-Emitter.prototype.removeListener =
-Emitter.prototype.removeAllListeners =
-Emitter.prototype.removeEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-
-  // all
-  if (0 == arguments.length) {
-    this._callbacks = {};
-    return this;
-  }
-
-  // specific event
-  var callbacks = this._callbacks[event];
-  if (!callbacks) return this;
-
-  // remove all handlers
-  if (1 == arguments.length) {
-    delete this._callbacks[event];
-    return this;
-  }
-
-  // remove specific handler
-  var cb;
-  for (var i = 0; i < callbacks.length; i++) {
-    cb = callbacks[i];
-    if (cb === fn || cb.fn === fn) {
-      callbacks.splice(i, 1);
-      break;
-    }
-  }
-  return this;
-};
-
-/**
- * Emit `event` with the given args.
- *
- * @param {String} event
- * @param {Mixed} ...
- * @return {Emitter}
- */
-
-Emitter.prototype.emit = function(event){
-  this._callbacks = this._callbacks || {};
-  var args = [].slice.call(arguments, 1)
-    , callbacks = this._callbacks[event];
-
-  if (callbacks) {
-    callbacks = callbacks.slice(0);
-    for (var i = 0, len = callbacks.length; i < len; ++i) {
-      callbacks[i].apply(this, args);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return array of callbacks for `event`.
- *
- * @param {String} event
- * @return {Array}
- * @api public
- */
-
-Emitter.prototype.listeners = function(event){
-  this._callbacks = this._callbacks || {};
-  return this._callbacks[event] || [];
-};
-
-/**
- * Check if this emitter has `event` handlers.
- *
- * @param {String} event
- * @return {Boolean}
- * @api public
- */
-
-Emitter.prototype.hasListeners = function(event){
-  return !! this.listeners(event).length;
-};
-
-});
-
 require.register("component~emitter@1.1.3", function (exports, module) {
 
 /**
@@ -474,97 +306,6 @@ Emitter.prototype.hasListeners = function(event){
 
 });
 
-require.register("component~domify@1.2.2", function (exports, module) {
-
-/**
- * Expose `parse`.
- */
-
-module.exports = parse;
-
-/**
- * Wrap map from jquery.
- */
-
-var map = {
-  legend: [1, '<fieldset>', '</fieldset>'],
-  tr: [2, '<table><tbody>', '</tbody></table>'],
-  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
-  _default: [0, '', '']
-};
-
-map.td =
-map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
-
-map.option =
-map.optgroup = [1, '<select multiple="multiple">', '</select>'];
-
-map.thead =
-map.tbody =
-map.colgroup =
-map.caption =
-map.tfoot = [1, '<table>', '</table>'];
-
-map.text =
-map.circle =
-map.ellipse =
-map.line =
-map.path =
-map.polygon =
-map.polyline =
-map.rect = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
-
-/**
- * Parse `html` and return the children.
- *
- * @param {String} html
- * @return {Array}
- * @api private
- */
-
-function parse(html) {
-  if ('string' != typeof html) throw new TypeError('String expected');
-  
-  // tag name
-  var m = /<([\w:]+)/.exec(html);
-  if (!m) return document.createTextNode(html);
-
-  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
-
-  var tag = m[1];
-
-  // body support
-  if (tag == 'body') {
-    var el = document.createElement('html');
-    el.innerHTML = html;
-    return el.removeChild(el.lastChild);
-  }
-
-  // wrap map
-  var wrap = map[tag] || map._default;
-  var depth = wrap[0];
-  var prefix = wrap[1];
-  var suffix = wrap[2];
-  var el = document.createElement('div');
-  el.innerHTML = prefix + html + suffix;
-  while (depth--) el = el.lastChild;
-
-  // one element
-  if (el.firstChild == el.lastChild) {
-    return el.removeChild(el.firstChild);
-  }
-
-  // several elements
-  var fragment = document.createDocumentFragment();
-  while (el.firstChild) {
-    fragment.appendChild(el.removeChild(el.firstChild));
-  }
-
-  return fragment;
-}
-
-});
-
 require.register("component~domify@1.3.1", function (exports, module) {
 
 /**
@@ -674,44 +415,6 @@ function parse(html, doc) {
   return fragment;
 }
 
-});
-
-require.register("component~event@0.1.3", function (exports, module) {
-var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
-    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
-    prefix = bind !== 'addEventListener' ? 'on' : '';
-
-/**
- * Bind `el` event `type` to `fn`.
- *
- * @param {Element} el
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @return {Function}
- * @api public
- */
-
-exports.bind = function(el, type, fn, capture){
-  el[bind](prefix + type, fn, capture || false);
-  return fn;
-};
-
-/**
- * Unbind `el` event `type`'s callback `fn`.
- *
- * @param {Element} el
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @return {Function}
- * @api public
- */
-
-exports.unbind = function(el, type, fn, capture){
-  el[unbind](prefix + type, fn, capture || false);
-  return fn;
-};
 });
 
 require.register("component~event@0.1.4", function (exports, module) {
@@ -2128,13 +1831,13 @@ exports.cancel = function(id){
 
 });
 
-require.register("littlstar~slant-controls@0.0.7", function (exports, module) {
+require.register("littlstar~slant-controls@0.1.3", function (exports, module) {
 
 /**
  * Module dependencies
  */
 
-var tpl = require('littlstar~slant-controls@0.0.7/template.html')
+var tpl = require('littlstar~slant-controls@0.1.3/template.html')
   , dom = require('component~domify@1.3.1')
   , events = require('component~events@1.0.9')
   , emitter = require('component~emitter@1.1.3')
@@ -2274,10 +1977,13 @@ function Controls (frame, opts) {
     var w = float(getComputedStyle(volumeSlider, null).width);
     var p = x / w;
     var v = w * self.frame.video.volume;
+
     raf(function () {
       volumeLevel.style.width = v +'px';
     });
+
     self.frame.volume(p);
+
     self.emit('volume');
   });
 
@@ -2316,20 +2022,25 @@ function Controls (frame, opts) {
     var x = 0;
 
     // update progress bar
-    loaded.style.width = e.percent + '%';
+    raf(function () {
+      loaded.style.width = e.percent + '%';
+    });
 
     // new scrub range
     x = loaded.offsetWidth;
 
     // update scrub range
     self.scrub.range.x[1] = x;
-
   });
 
   this.frame.on('timeupdate', function (e) {
     var replay = self.el.querySelector('.playpause .replay');
+
     // update played progress bar
-    played.style.width = e.percent + '%';
+    raf(function () {
+      played.style.width = e.percent + '%';
+    });
+
     replay.classList.add('hidden');
     update();
   });
@@ -2343,6 +2054,14 @@ function Controls (frame, opts) {
     pause.classList.add('hidden');
     replay.classList.remove('hidden');
 
+    self.paused = true;
+  });
+
+  self.frame.on('play', function () {
+    self.paused = false;
+  });
+
+  self.frame.on('pause', function () {
     self.paused = true;
   });
 
@@ -2468,7 +2187,6 @@ Controls.prototype.onvolumeclick = function (e) {
   }
 
   this.volume(v);
-  this.emit('scrubend', e);
 };
 
 /**
@@ -2498,14 +2216,17 @@ Controls.prototype.onscrubclick = function (e) {
  * the `onplayclick' event handler
  *
  * @api public
+ * @param {Boolean} toggle
  */
 
-Controls.prototype.play = function () {
+Controls.prototype.play = function (toggle) {
   this.el.querySelector('.play').classList.add('hidden');
   this.el.querySelector('.replay').classList.add('hidden');
   this.el.querySelector('.pause').classList.remove('hidden');
-  this.frame.play();
-  this.emit('play');
+  if (true != toggle) {
+    this.frame.play();
+    this.emit('play');
+  }
   return this;
 };
 
@@ -2514,13 +2235,15 @@ Controls.prototype.play = function () {
  * the `onplayclick' event handler
  *
  * @api public
-
+ * @param {Boolean} toggle
  */
-Controls.prototype.pause = function () {
+Controls.prototype.pause = function (toggle) {
   this.el.querySelector('.pause').classList.add('hidden');
   this.el.querySelector('.play').classList.remove('hidden');
-  this.frame.pause();
-  this.emit('pause');
+  if (true != toggle) {
+    this.frame.pause();
+    this.emit('pause');
+  }
   return this;
 };
 
@@ -2530,8 +2253,11 @@ Controls.prototype.pause = function () {
  * @api public
  */
 
-Controls.prototype.toggle = function () {
-  return this.frame.video.paused ? this.play() : this.pause();
+Controls.prototype.toggle = function (toggle) {
+  return (
+    this.frame.video.paused ?
+    this.play(toggle) : this.pause(toggle)
+  );
 };
 
 /**
@@ -2576,6 +2302,7 @@ Controls.prototype.volume = function (vol) {
 
 Controls.prototype.mute = function () {
   this.frame.mute();
+  this.emit('mute');
   return this;
 };
 
@@ -2587,6 +2314,7 @@ Controls.prototype.mute = function () {
 
 Controls.prototype.unmute = function () {
   this.frame.unmute();
+  this.emit('unmute');
   return this;
 };
 
@@ -2598,7 +2326,12 @@ Controls.prototype.unmute = function () {
  */
 
 Controls.prototype.seek = function (seconds) {
+  this.emit('beforeseek', seconds);
   this.frame.seek(seconds);
+  if (false == this.paused) {
+    this.play();
+  }
+  this.emit('seek', seconds);
   return this;
 };
 
@@ -2684,7 +2417,7 @@ Controls.prototype.hide = function () {
 
 });
 
-require.define("littlstar~slant-controls@0.0.7/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n      <a href=\"#\" class=\"replay fadeIn hidden\">&#10227;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"gutter\"></span>\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <span class=\"control\">vol</span>\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
+require.define("littlstar~slant-controls@0.1.3/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n      <a href=\"#\" class=\"replay fadeIn hidden\">&#10227;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <!--span class=\"control\">vol</span-->\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
 
 require.register("components~three.js@0.0.69", function (exports, module) {
 // File:src/Three.js
@@ -37420,18 +37153,43 @@ THREE.MorphBlendMesh.prototype.update = function ( delta ) {
 
 });
 
-require.register("littlstar~slant-frame@0.0.4", function (exports, module) {
+require.register("jb55~has-webgl@v0.0.1", function (exports, module) {
+/**
+ * @author alteredq / http://alteredqualia.com/
+ * @author mr.doob / http://mrdoob.com/
+ */
+
+module.exports = (function() {
+  try { 
+    return !!window.WebGLRenderingContext && 
+           !!document.createElement('canvas').getContext('experimental-webgl'); 
+  } 
+  catch(e) { 
+    return false; 
+  }
+})();
+
+});
+
+require.register("littlstar~slant-frame@0.1.2", function (exports, module) {
 
 /**
  * Module dependencies
  */
 
 var three = require('components~three.js@0.0.69')
-  , tpl = require('littlstar~slant-frame@0.0.4/template.html')
   , dom = require('component~domify@1.3.1')
   , emitter = require('component~emitter@1.1.3')
   , events = require('component~events@1.0.9')
   , raf = require('component~raf@1.2.0')
+  , hasWebGL = require('jb55~has-webgl@v0.0.1')
+  , tpl = require('littlstar~slant-frame@0.1.2/template.html')
+
+// default field of view
+var DEFAULT_FOV = 35;
+
+// frame click threshold
+var FRAME_CLICK_THRESHOLD = 200;
 
 /**
  * `Frame' constructor
@@ -37452,10 +37210,16 @@ function Frame (parent, opts) {
   var self = this;
 
   this.opts = (opts = opts || {});
+
+  // DOM event bindings
   this.events = {};
 
+  // parent DOM node
+  this.parent = parent;
+
+  // set defualt FOV
   if ('undefined' == typeof opts.pov) {
-    opts.fov = opts.fieldOfView || 36;
+    opts.fov = opts.fieldOfView || DEFAULT_FOV;
   }
 
   // init view
@@ -37465,20 +37229,19 @@ function Frame (parent, opts) {
 
   function set (p) {
     if (opts[p]) {
-      this.video[p] = opts[p];
+      self.video[p] = opts[p];
     }
   }
 
+  // set video options
   set('preload');
   set('autoplay');
   set('crossorigin');
   set('loop');
   set('muted');
 
+  // initialize video source
   this.src(opts.src);
-  this.parent = parent;
-
-  parent.appendChild(this.el);
 
   // event delagation
   this.events = {};
@@ -37486,15 +37249,23 @@ function Frame (parent, opts) {
   // init video events
   this.events.video = events(this.video, this);
   this.events.video.bind('canplaythrough');
+  this.events.video.bind('play');
+  this.events.video.bind('pause');
+  this.events.video.bind('playing');
   this.events.video.bind('progress');
   this.events.video.bind('timeupdate');
+  this.events.video.bind('loadstart');
+  this.events.video.bind('waiting');
   this.events.video.bind('ended');
 
   // init dom element events
   this.events.element = events(this.el, this);
+  this.events.element.bind('click');
+  this.events.element.bind('touch', 'onclick');
   this.events.element.bind('mousemove');
   this.events.element.bind('mousewheel');
   this.events.element.bind('mousedown');
+  this.events.element.bind('touchstart', 'onmousedown');
   this.events.element.bind('mouseup');
 
   // init scene
@@ -37504,21 +37275,23 @@ function Frame (parent, opts) {
   this.camera = null;
 
   // init renderer
-  this.renderer = new three.WebGLRenderer();
+  this.renderer = opts.renderer || (
+    hasWebGL ?
+    new three.WebGLRenderer() :
+    new three.CanvasRenderer()
+  );
+
+  // renderer options
   this.renderer.autoClear = opts.autoClear || false;
   this.renderer.setClearColor(opts.clearColor || 0x000, 1);
 
-  // init video texture
-  this.texture = new three.Texture(this.video);
-  this.texture.format = three.RGBFormat;
-  this.texture.minFilter = three.LinearFilter;
-  this.texture.magFilter = three.LinearFilter;
-  this.texture.generateMipmaps = false;
+  // attach renderer to instance node container
+  this.el.querySelector('.container').appendChild(this.renderer.domElement);
 
-  this.geo = new three.SphereGeometry(500, 80, 50);
-  this.material = new three.MeshBasicMaterial({map: this.texture});
-  this.mesh = new three.Mesh(this.geo, this.material);
-  this.mesh.scale.x = -1; // mesh
+  this.material = null;
+  this.texture = null;
+  this.mesh = null;
+  this.geo = null;
 
   if (opts.muted) {
     this.mute(true);
@@ -37532,11 +37305,14 @@ function Frame (parent, opts) {
     dragstart: {},
     duration: 0,
     dragloop: null,
+    playing: false,
+    paused: false,
     dragpos: [],
     played: 0,
     height: opts.height,
     width: opts.width,
     muted: Boolean(opts.muted),
+    ended: false,
     wheel: false,
     event: null,
     theta: 0,
@@ -37547,14 +37323,37 @@ function Frame (parent, opts) {
     lon: 0,
     fov: opts.fov
   };
-
-  // add mesh to scene
-  this.scene.add(this.mesh);
-
 }
 
 // mixin `Emitter'
 emitter(Frame.prototype);
+
+/**
+ * Handle `onclick' event
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Frame.prototype.onclick = function (e) {
+  var now = Date.now();
+  var ts = this.state.mousedownts;
+
+  if ((now - ts) > FRAME_CLICK_THRESHOLD) {
+    return false;
+  } else {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  if (this.state.playing) {
+    this.pause();
+  } else {
+    this.play();
+  }
+
+  this.emit('click', e);
+};
 
 /**
  * Handle `oncanplaythrough' event
@@ -37573,6 +37372,67 @@ Frame.prototype.oncanplaythrough = function (e) {
   if (true == this.opts.autoplay) {
     this.video.play();
   }
+};
+
+/**
+ * Handle `onplay' event
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Frame.prototype.onplay = function (e) {
+  this.state.paused = false;
+  this.state.ended = false;
+  this.emit('play', e);
+};
+
+/**
+ * Handle `onpause' event
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Frame.prototype.onpause = function (e) {
+  this.state.paused = true;
+  this.state.playing = false;
+  this.emit('pause', e);
+};
+
+/**
+ * Handle `onplaying' event
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Frame.prototype.onplaying = function (e) {
+  this.state.playing = true;
+  this.state.paused = false;
+  this.emit('playing', e);
+};
+
+/**
+ * Handle `onwaiting' event
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Frame.prototype.onwaiting = function (e) {
+  this.emit('wait', e);
+};
+
+/**
+ * Handle `onloadstart' event
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Frame.prototype.onloadstart = function (e) {
+  this.emit('loadstart', e);
 };
 
 /**
@@ -37624,6 +37484,7 @@ Frame.prototype.ontimeupdate = function (e) {
  */
 
 Frame.prototype.onended = function (e) {
+  this.state.ended = true;
   this.emit('end');
   this.emit('ended');
 };
@@ -37636,6 +37497,7 @@ Frame.prototype.onended = function (e) {
  */
 
 Frame.prototype.onmousedown = function (e) {
+  this.state.mousedownts = Date.now();
   this.state.dragstart.x = e.pageX;
   this.state.dragstart.y = e.pageY;
   this.state.mousedown = true;
@@ -37729,6 +37591,7 @@ Frame.prototype.onmousewheel = function (e) {
  */
 
 Frame.prototype.size = function (width, height) {
+  this.emit('size', width, height);
   this.renderer.setSize(
     (this.state.width = width),
     (this.state.height = height));
@@ -37743,6 +37606,7 @@ Frame.prototype.size = function (width, height) {
  */
 
 Frame.prototype.src = function (src) {
+  this.emit('source', src);
   return (src ?
     ((this.video.src = src), this) :
     this.video.src);
@@ -37755,8 +37619,10 @@ Frame.prototype.src = function (src) {
  */
 
 Frame.prototype.play = function () {
+  if (true == this.state.ended) {
+    this.seek(0);
+  }
   this.video.play();
-  this.emit('play');
   return this;
 };
 
@@ -37768,7 +37634,6 @@ Frame.prototype.play = function () {
 
 Frame.prototype.pause = function () {
   this.video.pause();
-  this.emit('pause');
   return this;
 };
 
@@ -37784,6 +37649,7 @@ Frame.prototype.volume = function (n) {
     return this.video.volume;
   }
   this.video.volume = n
+  this.emit('volume', n);
   return this;
 };
 
@@ -37803,6 +37669,7 @@ Frame.prototype.mute = function (mute) {
   } else {
     this.video.muted = true;
     this.volume(0);
+    this.emit('mute');
   }
   return this;
 };
@@ -37815,7 +37682,9 @@ Frame.prototype.mute = function (mute) {
  */
 
 Frame.prototype.unmute = function (mute) {
-  return this.mute(false);
+  this.mute(false);
+  this.emit('unmute');
+  return this;
 };
 
 /**
@@ -37826,9 +37695,14 @@ Frame.prototype.unmute = function (mute) {
 
 Frame.prototype.refresh = function () {
   var now = Date.now();
-  if (now - this.state.timestamp >= 32) {
-    this.state.timestamp = now;
-    this.texture.needsUpdate = true;
+  var video = this.video;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    if (now - this.state.timestamp >= 32) {
+      this.state.timestamp = now;
+      if ('undefined' != typeof this.texture) {
+        this.texture.needsUpdate = true;
+      }
+    }
   }
   this.emit('refresh');
   this.emit('state', this.state);
@@ -37836,17 +37710,17 @@ Frame.prototype.refresh = function () {
 };
 
 /**
- * Seek to time
+ * Seek to time in seconds
  *
  * @api public
- * @param {Number} time
+ * @param {Number} seconds
  */
 
-Frame.prototype.seek = function (value) {
-  if (value >= 0 && value <= this.video.duration) {
-    this.video.currentTime = value;
+Frame.prototype.seek = function (seconds) {
+  if (seconds >= 0 && seconds <= this.video.duration) {
+    this.video.currentTime = seconds;
+    this.emit('seek', seconds);
   }
-
   return this;
 };
 
@@ -37858,7 +37732,9 @@ Frame.prototype.seek = function (value) {
  */
 
 Frame.prototype.foward = function (seconds) {
-  return this.seek(this.video.currentTime + seconds);
+  this.seek(this.video.currentTime + seconds);
+  this.emit('forward', seconds);
+  return this;
 };
 
 /**
@@ -37869,7 +37745,9 @@ Frame.prototype.foward = function (seconds) {
  */
 
 Frame.prototype.rewind = function (seconds) {
-  return this.seek(this.video.currentTime - seconds);
+  this.seek(this.video.currentTime - seconds);
+  this.emit('rewind', seconds);
+  return this;
 };
 
 /**
@@ -37929,20 +37807,37 @@ Frame.prototype.render = function () {
   var height = this.state.height || parseFloat(style.height);
   var width = this.state.width || parseFloat(style.width);
 
+  // attach dom node to parent
+  this.parent.appendChild(this.el);
+
+  this.texture = new three.Texture(this.video);
+  this.texture.format = three.RGBFormat;
+  this.texture.minFilter = three.LinearFilter;
+  this.texture.magFilter = three.LinearFilter;
+  this.texture.generateMipmaps = false;
+
+  this.geo = new three.SphereGeometry(500, 80, 50);
+  this.material = new three.MeshBasicMaterial({map: this.texture});
+  this.mesh = new three.Mesh(this.geo, this.material);
+  this.mesh.scale.x = -1; // mesh
+
   this.size(width, height);
 
   // init camera
   this.camera = new three.PerspectiveCamera(
     fov, (width / height) | 0, 0.1, 1000);
 
-  // attach renderer to instance node container
-  this.el.querySelector('.container').appendChild(this.renderer.domElement);
+  // add mesh to scene
+  this.scene.add(this.mesh);
 
-
+  // start refresh loop
   raf(function loop () {
     self.refresh();
     raf(loop);
   });
+
+  this.emit('render');
+
   return this;
 };
 
@@ -37972,6 +37867,7 @@ Frame.prototype.height = function (height) {
   }
 
   this.state.height = height;
+  this.emit('height', height);
   return this;
 };
 
@@ -37988,23 +37884,24 @@ Frame.prototype.width = function (width) {
   }
 
   this.state.width = width;
+  this.emit('width', width);
   return this;
 };
 
 });
 
-require.define("littlstar~slant-frame@0.0.4/template.html", "<section class=\"slant frame\">\n  <div class=\"slant container\">\n    <video class=\"slant\"></video>\n  </div>\n</section>\n");
+require.define("littlstar~slant-frame@0.1.2/template.html", "<section class=\"slant frame\">\n  <div class=\"slant container\">\n    <video class=\"slant\"></video>\n  </div>\n</section>\n");
 
-require.register("littlstar~slant-player@0.0.1", function (exports, module) {
+require.register("littlstar~slant-player@0.0.3", function (exports, module) {
 
 /**
  * Module dependencies
  */
 
-var tpl = require('littlstar~slant-player@0.0.1/template.html')
+var tpl = require('littlstar~slant-player@0.0.3/template.html')
   , dom = require('component~domify@1.3.1')
-  , Frame = require('littlstar~slant-frame@0.0.4')
-  , Controls = require('littlstar~slant-controls@0.0.7')
+  , Frame = require('littlstar~slant-frame@0.1.2')
+  , Controls = require('littlstar~slant-controls@0.1.3')
   , emitter = require('component~emitter@1.1.3')
 
 /**
@@ -38021,6 +37918,8 @@ function Player (parent, opts) {
     return new Player(parent, opts);
   }
 
+  opts = opts || {};
+
   var style = getComputedStyle(parent);
   var width = opts.width || parseInt(style.width);
   var height = opts.height || parseInt(style.height);
@@ -38029,12 +37928,12 @@ function Player (parent, opts) {
   this.el = dom(tpl);
   this.parent = parent;
 
+  opts.frame.height = height;
+  opts.frame.width = width;
+  opts.frame.src = opts.src;
+
   // init video frame
-  this.frame = new Frame(this.el, {
-    height: height,
-    width: width,
-    src: opts.src
-  });
+  this.frame = new Frame(this.el, opts.frame);
 
   // init frame controls
   this.controls = new Controls(this.frame, opts.controls);
@@ -38167,18 +38066,18 @@ Player.prototype.destroy = function () {
 
 });
 
-require.define("littlstar~slant-player@0.0.1/template.html", "\n<section class=\"slant player\">\n</section>\n");
+require.define("littlstar~slant-player@0.0.3/template.html", "\n<section class=\"slant player\">\n</section>\n");
 
-require.register("component~overlay@0.3.1", function (exports, module) {
+require.register("component~overlay@0.3.2", function (exports, module) {
 
 /**
  * Module dependencies.
  */
 
-var Emitter = require('component~emitter@1.1.2');
-var tmpl = require('component~overlay@0.3.1/template.html');
-var domify = require('component~domify@1.2.2');
-var event = require('component~event@0.1.3');
+var Emitter = require('component~emitter@1.1.3');
+var tmpl = require('component~overlay@0.3.2/template.html');
+var domify = require('component~domify@1.3.1');
+var event = require('component~event@0.1.4');
 var classes = require('component~classes@1.2.1');
 
 /**
@@ -38289,339 +38188,519 @@ Overlay.prototype.remove = function(){
 
 });
 
-require.define("component~overlay@0.3.1/template.html", "<div class=\"overlay hidden\"></div>\n");
+require.define("component~overlay@0.3.2/template.html", "<div class=\"overlay hidden\"></div>\n");
 
-require.register("component~dialog@0.3.0", function (exports, module) {
-
-/**
- * Module dependencies.
- */
-
-var Emitter = require('component~emitter@1.1.3')
-  , overlay = require('component~overlay@0.3.1')
-  , domify = require('component~domify@1.3.1')
-  , events = require('component~event@0.1.4')
-  , classes = require('component~classes@1.2.1')
-  , query = require('component~query@0.0.3');
+require.register("yields~keycode@1.1.0", function (exports, module) {
 
 /**
- * Active dialog.
+ * map
  */
 
-var active;
-
-/**
- * Expose `dialog()`.
- */
-
-exports = module.exports = dialog;
-
-/**
- * Expose `Dialog`.
- */
-
-exports.Dialog = Dialog;
-
-/**
- * Return a new `Dialog` with the given
- * (optional) `title` and `msg`.
- *
- * @param {String} title or msg
- * @param {String} msg
- * @return {Dialog}
- * @api public
- */
-
-function dialog(title, msg){
-  switch (arguments.length) {
-    case 2:
-      return new Dialog({ title: title, message: msg });
-    case 1:
-      return new Dialog({ message: title });
-  }
+var map = {
+    backspace: 8
+  , command: 91
+  , tab: 9
+  , clear: 12
+  , enter: 13
+  , shift: 16
+  , ctrl: 17
+  , alt: 18
+  , capslock: 20
+  , escape: 27
+  , esc: 27
+  , space: 32
+  , left: 37
+  , up: 38
+  , right: 39
+  , down: 40
+  , del: 46
+  , comma: 188
+  , f1: 112
+  , f2: 113
+  , f3: 114
+  , f4: 115
+  , f5: 116
+  , f6: 117
+  , f7: 118
+  , f8: 119
+  , f9: 120
+  , f10: 121
+  , f11: 122
+  , f12: 123
+  , ',': 188
+  , '.': 190
+  , '/': 191
+  , '`': 192
+  , '-': 189
+  , '=': 187
+  , ';': 186
+  , '[': 219
+  , '\\': 220
+  , ']': 221
+  , '\'': 222
 };
 
 /**
- * Initialize a new `Dialog`.
- *
- * Options:
- *
- *    - `title` dialog title
- *    - `message` a message to display
- *
- * Emits:
- *
- *    - `show` when visible
- *    - `hide` when hidden
- *
- * @param {Object} options
- * @api public
- */
-
-function Dialog(options) {
-  Emitter.call(this);
-  options = options || {};
-  this.template = require('component~dialog@0.3.0/template.html');
-  this.el = domify(this.template);
-  this._classes = classes(this.el);
-  this.render(options);
-  if (active && !active.hiding) active.hide();
-  if (exports.effect) this.effect(exports.effect);
-  this.on('escape', this.hide.bind(this));
-  active = this;
-};
-
-/**
- * Inherit from `Emitter.prototype`.
- */
-
-Dialog.prototype = new Emitter;
-
-/**
- * Render with the given `options`.
- *
- * @param {Object} options
- * @api public
- */
-
-Dialog.prototype.render = function(options){
-  var self = this
-    , el = self.el
-    , title = options.title
-    , titleEl = query('.title', el)
-    , pEl = query('p', el)
-    , msg = options.message;
-
-  events.bind(query('.close', el), 'click', function (ev) {
-    ev.preventDefault();
-    self.emit('close');
-    self.hide();
-  });
-
-  if (titleEl) {
-    if (!title) {
-      titleEl.parentNode.removeChild(titleEl);
-    } else {
-      titleEl.textContent = title;
-    }
-  }
-
-  // message
-  if ('string' == typeof msg) {
-    pEl.textContent = msg;
-  } else if (msg) {
-    pEl.parentNode.insertBefore(msg.el || msg, pEl);
-    pEl.parentNode.removeChild(pEl);
-  }
-};
-
-/**
- * Enable the dialog close link.
- *
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.closable = function(){
-  return this.addClass('closable');
-};
-
-/**
- * Add class `name`.
+ * find a keycode.
  *
  * @param {String} name
- * @return {Dialog}
- * @api public
+ * @return {Number}
  */
 
-Dialog.prototype.addClass = function(name){
-  this._classes.add(name);
-  return this;
-};
-
-/**
- * Set the effect to `type`.
- *
- * @param {String} type
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.effect = function(type){
-  this._effect = type;
-  this.addClass(type);
-  return this;
-};
-
-/**
- * Make it modal!
- *
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.modal = function(){
-  this._overlay = overlay();
-  return this;
-};
-
-/**
- * Add an overlay.
- *
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.overlay = function(opts){
-  var self = this;
-  opts = opts || { closable: true };
-  var o = overlay(opts);
-  o.on('hide', function(){
-    self._overlay = null;
-    self.hide();
-  });
-  this._overlay = o;
-  return this;
-};
-
-/**
- * Close the dialog when the escape key is pressed.
- *
- * @api public
- */
-
-Dialog.prototype.escapable = function(){
-  var self = this;
-  // Save reference to remove listener later
-  self._escKeyCallback = self._escKeyCallback || function (e) {
-    e.which = e.which || e.keyCode;
-    if (27 !== e.which) return;
-    self.emit('escape');
-  };
-  events.bind(document, 'keydown', self._escKeyCallback);
-  return this;
-};
-
-/**
- * Fixed dialogs position can be manipulated through CSS.
- *
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.fixed = function(){
-  this._fixed = true;
-  return this;
-}
-
-/**
- * Show the dialog.
- *
- * Emits "show" event.
- *
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.show = function(){
-  var overlay = this._overlay;
-  var self = this;
-
-  // overlay
-  if (overlay) {
-    overlay.show();
-    this._classes.add('modal');
-  }
-
-  // escape
-  if (!overlay || overlay.closable) this.escapable();
-
-  // position
-  document.body.appendChild(this.el);
-  if (!this._fixed) {
-    setTimeout(function() {
-      self.el.style.marginLeft = -(self.el.offsetWidth / 2) + 'px'
-    }, 0);
-  }
-  this._classes.remove('hide');
-  this.emit('show');
-  return this;
-};
-
-/**
- * Hide the overlay.
- *
- * @api private
- */
-
-Dialog.prototype.hideOverlay = function(){
-  if (!this._overlay) return;
-  this._overlay.remove();
-  this._overlay = null;
-};
-
-/**
- * Hide the dialog with optional delay of `ms`,
- * otherwise the dialog is removed immediately.
- *
- * Emits "hide" event.
- *
- * @return {Number} ms
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.hide = function(ms){
-  var self = this;
-
-  if (self._escKeyCallback) {
-    events.unbind(document, 'keydown', self._escKeyCallback);
-  }
-
-  // prevent thrashing - this isn't used
-  self.hiding = true;
-
-  // duration
-  if (ms) {
-    setTimeout(function(){
-      self.hide();
-    }, ms);
-    return self;
-  }
-
-  // hide / remove
-  self._classes.add('hide');
-  if (self._effect) {
-    setTimeout(function(){
-      self.remove();
-    }, 500);
-  } else {
-    self.remove();
-  }
-
-  // overlay
-  self.hideOverlay();
-
-  return self;
-};
-/**
- * Hide the dialog without potential animation.
- *
- * @return {Dialog} for chaining
- * @api public
- */
-
-Dialog.prototype.remove = function(){
-  if (this.el.parentNode) {
-    this.emit('hide');
-    this.el.parentNode.removeChild(this.el);
-  }
-  return this;
+module.exports = function(name){
+  return map[name.toLowerCase()] || name.toUpperCase().charCodeAt(0);
 };
 
 });
 
-require.define("component~dialog@0.3.0/template.html", "<div class=\"dialog hide\">\n  <div class=\"content\">\n    <span class=\"title\">Title</span>\n    <a href=\"#\" class=\"close\">&times;<em>close</em></a>\n    <div class=\"body\">\n      <p>Message</p>\n    </div>\n  </div>\n</div>\n");
+require.register("yields~k-sequence@0.1.0", function (exports, module) {
+
+/**
+ * dependencies
+ */
+
+var keycode = require('yields~keycode@1.1.0');
+
+/**
+ * Export `sequence`
+ */
+
+module.exports = sequence;
+
+/**
+ * Create sequence fn with `keys`.
+ * optional `ms` which defaults
+ * to `500ms` and `fn`.
+ *
+ * Example:
+ *
+ *      seq = sequence('a b c', fn);
+ *      el.addEventListener('keydown', seq);
+ *
+ * @param {String} keys
+ * @param {Number} ms
+ * @param {Function} fn
+ * @return {Function}
+ * @api public
+ */
+
+function sequence(keys, ms, fn){
+  var codes = keys.split(/ +/).map(keycode)
+    , clen = codes.length
+    , seq = []
+    , i = 0
+    , prev;
+
+  if (2 == arguments.length) {
+    fn = ms;
+    ms = 500;
+  }
+
+  return function(e){
+    var code = codes[i++];
+    if (42 != code && code != e.which) return reset();
+    if (prev && new Date - prev > ms) return reset();
+    var len = seq.push(e.which);
+    prev = new Date;
+    if (len != clen) return;
+    reset();
+    fn(e);
+  };
+
+  function reset(){
+    prev = null;
+    seq = [];
+    i = 0;
+  }
+};
+
+});
+
+require.register("component~bind@1.0.0", function (exports, module) {
+/**
+ * Slice reference.
+ */
+
+var slice = [].slice;
+
+/**
+ * Bind `obj` to `fn`.
+ *
+ * @param {Object} obj
+ * @param {Function|String} fn or string
+ * @return {Function}
+ * @api public
+ */
+
+module.exports = function(obj, fn){
+  if ('string' == typeof fn) fn = obj[fn];
+  if ('function' != typeof fn) throw new Error('bind() requires a function');
+  var args = slice.call(arguments, 2);
+  return function(){
+    return fn.apply(obj, args.concat(slice.call(arguments)));
+  }
+};
+
+});
+
+require.register("component~os@0.0.1", function (exports, module) {
+
+
+module.exports = os();
+
+function os() {
+  var ua = navigator.userAgent;
+  if (/mac/i.test(ua)) return 'mac';
+  if (/win/i.test(ua)) return 'windows';
+  if (/linux/i.test(ua)) return 'linux';
+}
+
+});
+
+require.register("yields~k@0.6.2", function (exports, module) {
+
+/**
+ * dependencies.
+ */
+
+var event = require('component~event@0.1.4')
+  , proto = require('yields~k@0.6.2/lib/proto.js')
+  , bind = require('component~bind@1.0.0');
+
+/**
+ * Create a new dispatcher with `el`.
+ *
+ * example:
+ *
+ *      var k = require('k')(window);
+ *      k('shift + tab', function(){});
+ *
+ * @param {Element} el
+ * @return {Function}
+ * @api public
+ */
+
+module.exports = function(el){
+  function k(e, fn){ k.handle(e, fn) };
+  k._handle = bind(k, proto.handle);
+  k._clear = bind(k, proto.clear);
+  event.bind(el, 'keydown', k._handle, false);
+  event.bind(el, 'keyup', k._handle, false);
+  event.bind(el, 'keyup', k._clear, false);
+  event.bind(el, 'focus', k._clear, false);
+  for (var p in proto) k[p] = proto[p];
+  k.listeners = [];
+  k.el = el;
+  return k;
+};
+
+});
+
+require.register("yields~k@0.6.2/lib/proto.js", function (exports, module) {
+
+/**
+ * dependencies
+ */
+
+var sequence = require('yields~k-sequence@0.1.0')
+  , keycode = require('yields~keycode@1.1.0')
+  , event = require('component~event@0.1.4')
+  , os = require('component~os@0.0.1');
+
+/**
+ * modifiers.
+ */
+
+var modifiers = {
+  224: 'command',
+  91: 'command',
+  93: 'command',
+  16: 'shift',
+  17: 'ctrl',
+  18: 'alt'
+};
+
+/**
+ * Super key.
+ * (must use subscript vs. dot notation to avoid issues with older browsers)
+ */
+
+exports[ 'super' ] = 'mac' == os
+  ? 'command'
+  : 'ctrl';
+
+/**
+ * Handle the given `KeyboardEvent` or bind
+ * a new `keys` handler.
+ *
+ * @param {String|KeyboardEvent} e
+ * @param {Function} fn
+ * @api private
+ */
+
+exports.handle = function(e, fn){
+  var ignore = this.ignore;
+  var event = e.type;
+  var code = e.which;
+
+  // bind
+  if (fn) return this.bind(e, fn);
+
+  // modifiers
+  var mod = modifiers[code];
+  if ('keydown' == event && mod) {
+    this[ 'super' ] = exports[ 'super' ] == mod;
+    this[mod] = true;
+    this.modifiers = true;
+    return;
+  }
+
+  // ignore
+  if (ignore && ignore(e)) return;
+
+  // listeners
+  var all = this.listeners;
+
+  // match
+  for (var i = 0; i < all.length; ++i) {
+    var invoke = true;
+    var obj = all[i];
+    var seq = obj.seq;
+    var mods = obj.mods;
+    var fn = seq || obj.fn;
+
+    if (!seq && code != obj.code) continue;
+    if (event != obj.event) continue;
+
+    for (var j = 0; j < mods.length; ++j) {
+      if (!this[mods[j]]) {
+        invoke = null;
+        break;
+      }
+    }
+
+    invoke && fn(e);
+  }
+};
+
+/**
+ * Destroy this `k` dispatcher instance.
+ *
+ * @api public
+ */
+
+exports.destroy = function(){
+  event.unbind(this.el, 'keydown', this._handle);
+  event.unbind(this.el, 'keyup', this._handle);
+  event.unbind(this.el, 'keyup', this._clear);
+  event.unbind(this.el, 'focus', this._clear);
+  this.listeners = [];
+};
+
+/**
+ * Unbind the given `keys` with optional `fn`.
+ *
+ * example:
+ *
+ *      k.unbind('enter, tab', myListener); // unbind `myListener` from `enter, tab` keys
+ *      k.unbind('enter, tab'); // unbind all `enter, tab` listeners
+ *      k.unbind(); // unbind all listeners
+ *
+ * @param {String} keys
+ * @param {Function} fn
+ * @return {k}
+ * @api public
+ */
+
+exports.unbind = function(keys, fn){
+  var fns = this.listeners
+    , len = fns.length
+    , all;
+
+  // unbind all
+  if (0 == arguments.length) {
+    this.listeners = [];
+    return this;
+  }
+
+  // parse
+  all = parseKeys(keys);
+
+  // unbind
+  for (var i = 0; i < all.length; ++i) {
+    for (var j = 0, obj; j < len; ++j) {
+      obj = fns[j];
+      if (!obj) continue;
+      if (fn && obj.fn != fn) continue;
+      if (obj.key != all[i].key) continue;
+      if (!matches(obj, all[i])) continue;
+      fns.splice(j--, 1);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Bind the given `keys` to `fn` with optional `event`
+ *
+ * example:
+ *
+ *      k.bind('shift + tab, ctrl + a', function(e){});
+ *
+ * @param {String} event
+ * @param {String} keys
+ * @param {Function} fn
+ * @return {k}
+ * @api public
+ */
+
+exports.bind = function(event, keys, fn){
+  var fns = this.listeners
+    , len
+    , all;
+
+  if (2 == arguments.length) {
+    fn = keys;
+    keys = event;
+    event = 'keydown';
+  }
+
+  all = parseKeys(keys);
+  len = all.length;
+
+  for (var i = 0; i < len; ++i) {
+    var obj = all[i];
+    obj.seq = obj.seq && sequence(obj.key, fn);
+    obj.event = event;
+    obj.fn = fn;
+    fns.push(obj);
+  }
+
+  return this;
+};
+
+/**
+ * Bind keyup with `keys` and `fn`.
+ *
+ * @param {String} keys
+ * @param {Function} fn
+ * @return {k}
+ * @api public
+ */
+
+exports.up = function(keys, fn){
+  return this.bind('keyup', keys, fn);
+};
+
+/**
+ * Bind keydown with `keys` and `fn`.
+ *
+ * @param {String} keys
+ * @param {Function} fn
+ * @return {k}
+ * @api public
+ */
+
+exports.down = function(keys, fn){
+  return this.bind('keydown', keys, fn);
+};
+
+/**
+ * Clear all modifiers on `keyup`.
+ *
+ * @api private
+ */
+
+exports.clear = function(e){
+  var code = e.keyCode || e.which;
+  if (!(code in modifiers)) return;
+  this[modifiers[code]] = null;
+  this.modifiers = this.command
+    || this.shift
+    || this.ctrl
+    || this.alt;
+};
+
+/**
+ * Ignore all input elements by default.
+ *
+ * @param {Event} e
+ * @return {Boolean}
+ * @api private
+ */
+
+exports.ignore = function(e){
+  var el = e.target || e.srcElement;
+  var name = el.tagName.toLowerCase();
+  return 'textarea' == name
+    || 'select' == name
+    || 'input' == name;
+};
+
+/**
+ * Parse the given `keys`.
+ *
+ * @param {String} keys
+ * @return {Array}
+ * @api private
+ */
+
+function parseKeys(keys){
+  keys = keys.replace('super', exports[ 'super' ]);
+
+  var all = ',' != keys
+    ? keys.split(/ *, */)
+    : [','];
+
+  var ret = [];
+  for (var i = 0; i < all.length; ++i) {
+    if ('' == all[i]) continue;
+    var mods = all[i].split(/ *\+ */);
+    var key = mods.pop() || ',';
+
+    ret.push({
+      seq: !!~ key.indexOf(' '),
+      code: keycode(key),
+      mods: mods,
+      key: key
+    });
+  }
+
+  return ret;
+}
+
+/**
+ * Check if the given `a` matches `b`.
+ *
+ * @param {Object} a
+ * @param {Object} b
+ * @return {Boolean}
+ * @api private
+ */
+
+function matches(a, b){
+  return 0 == b.mods.length || eql(a, b);
+}
+
+/**
+ * Shallow eql util.
+ *
+ * TODO: move to yields/eql
+ *
+ * @param {Array} a
+ * @param {Array} b
+ * @return {Boolean}
+ * @api private
+ */
+
+function eql(a, b){
+  a = a.mods.sort().toString();
+  b = b.mods.sort().toString();
+  return a == b;
+}
+
+});
 
 require.register("slant", function (exports, module) {
 
@@ -38629,11 +38708,14 @@ require.register("slant", function (exports, module) {
  * Module dependencies
  */
 
-var Player = require('littlstar~slant-player@0.0.1')
-  , dom = require('component~domify@1.3.1')
+var Player = require('littlstar~slant-player@0.0.3')
   , Emitter = require('component~emitter@1.1.3')
-  , Dialog = require('slant/dialog.js')
+  , overlay = require('component~overlay@0.3.2')
+  , events = require('component~events@1.0.9')
+  , dom = require('component~domify@1.3.1')
+  , raf = require('component~raf@1.2.0')
   , tpl = require('slant/template.html')
+  , k = require('yields~k@0.6.2')
 
 /**
  * Creates a new slant player attached to
@@ -38675,10 +38757,18 @@ function SlantVideo (parent, opts) {
   }
 
   opts = opts || {};
-  this.el = dom(tpl);
+
+  this.playing = false;
   this.parent = parent;
-  this.opts = opts;
   this.player = null;
+  this.opts = opts;
+  this.el = dom(tpl);
+  this.k = k(window);
+
+  this.events = events(this.el, this);
+
+  this._overlay = null;
+  this._loading = null;
 }
 
 // inherit `Emitter'
@@ -38691,13 +38781,47 @@ Emitter(SlantVideo.prototype);
  */
 
 SlantVideo.prototype.render = function () {
+  var self = this;
   if (false == this.parent.contains(this.el)) {
+    // render
     this.parent.appendChild(this.el);
+
+    // show loading
+    this.loading();
+
+    this.opts = this.opts || {};
+    this.opts.frame = this.opts.frame || {};
+
     this.opts.width = this.width();
     this.opts.height = this.height();
+
     this.player = new Player(this.el, this.opts);
+    this.player.frame.on('ready', function () {
+      raf(function () { self.loading(false); });
+    });
+
     this.player.render();
     this.player.frame.size(this.width(), this.height());
+    this.player.frame.on('seek', function () {
+      self.loading();
+    });
+
+    this.player.frame.on('timeupdate', function () {
+      self.loading(false);
+    });
+
+    this.player.frame.video.onerrror = function (e) {
+      console.error(e);
+    };
+
+    this.player.frame.on('playing', function (e) {
+      self.player.controls.play(true);
+    });
+
+    this.player.frame.on('pause', function (e) {
+      self.player.controls.pause(true);
+    });
+
     this.emit('render');
   }
   return this;
@@ -38764,6 +38888,7 @@ SlantVideo.prototype.use = function (fn) {
 
 SlantVideo.prototype.play = function () {
   this.player.play();
+  this.playing = true;
   this.emit('play');
   return this;
 };
@@ -38776,7 +38901,32 @@ SlantVideo.prototype.play = function () {
 
 SlantVideo.prototype.pause = function () {
   this.player.pause();
+  this.playing = false;
   this.emit('pause');
+  return this;
+};
+
+/**
+ * Stops video
+ *
+ * @api public
+ */
+
+SlantVideo.prototype.stop = function () {
+  this.seek(0);
+  this.pause();
+  return this;
+};
+
+/**
+ * Replays video
+ *
+ * @api public
+ */
+
+SlantVideo.prototype.replay  = function () {
+  this.seek(0);
+  this.play();
   return this;
 };
 
@@ -38843,17 +38993,43 @@ SlantVideo.prototype.hide = function () {
 };
 
 /**
- * Shows video player dialog with optional
- * title and body
+ * Show overlay
  *
  * @api public
- * @param {String} title - optional
- * @param {String} body
+ * @param {Object|Boolean} opts - optional
  */
 
-SlantVideo.prototype.dialog = function (title, body) {
+SlantVideo.prototype.overlay = function (opts) {
+  if (false === opts) {
+    if (null != this._overlay) {
+      this._overlay.remove();
+      this._overlay = null;
+    }
+  } else {
+    // remove any existing overlays
+    this.overlay(false);
 
-  this.emit('dialog');
+    // ensure `opts' is an object
+    opts = 'object' == typeof opts ? opts : {};
+
+    // set target defaulting to instance node
+    opts.target = opts.target || this.el;
+
+    // init
+    this._overlay = overlay(opts);
+
+    // set body if defined
+    if ('string' == typeof opts.body) {
+      this._overlay.el.innerHTML = opts.body;
+    } else if (opts.body instanceof Element) {
+      this._overlay.el.appendChild(opts.body);
+    }
+
+    // show
+    this._overlay.show();
+    this.emit('overlay', this._overlay);
+  }
+
   return this;
 };
 
@@ -38865,16 +39041,22 @@ SlantVideo.prototype.dialog = function (title, body) {
  */
 
 SlantVideo.prototype.loading = function (show) {
+  if (false == show) {
+    this.overlay(false);
+  } else {
+    this.overlay(false).overlay({
+      body: require('slant/loading.html')
+    });
+  }
+
   return this;
 };
 
 });
 
-require.register("slant/dialog.js", function (exports, module) {
-
-});
-
 require.define("slant/template.html", "\n<section class=\"slant video\">\n</section>\n");
+
+require.define("slant/loading.html", "\n<section class=\"loading\">\n  <span>Loading...</span>\n</section>\n");
 
 if (typeof exports == "object") {
   module.exports = require("slant");

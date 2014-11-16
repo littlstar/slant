@@ -4,10 +4,13 @@
  */
 
 var Player = require('slant-player')
-  , dom = require('domify')
   , Emitter = require('emitter')
-  , Dialog = require('./dialog')
+  , overlay = require('overlay')
+  , events = require('events')
+  , dom = require('domify')
+  , raf = require('raf')
   , tpl = require('./template.html')
+  , k = require('k')
 
 /**
  * Creates a new slant player attached to
@@ -49,10 +52,18 @@ function SlantVideo (parent, opts) {
   }
 
   opts = opts || {};
-  this.el = dom(tpl);
+
+  this.playing = false;
   this.parent = parent;
-  this.opts = opts;
   this.player = null;
+  this.opts = opts;
+  this.el = dom(tpl);
+  this.k = k(window);
+
+  this.events = events(this.el, this);
+
+  this._overlay = null;
+  this._loading = null;
 }
 
 // inherit `Emitter'
@@ -65,13 +76,47 @@ Emitter(SlantVideo.prototype);
  */
 
 SlantVideo.prototype.render = function () {
+  var self = this;
   if (false == this.parent.contains(this.el)) {
+    // render
     this.parent.appendChild(this.el);
+
+    // show loading
+    this.loading();
+
+    this.opts = this.opts || {};
+    this.opts.frame = this.opts.frame || {};
+
     this.opts.width = this.width();
     this.opts.height = this.height();
+
     this.player = new Player(this.el, this.opts);
+    this.player.frame.on('ready', function () {
+      raf(function () { self.loading(false); });
+    });
+
     this.player.render();
     this.player.frame.size(this.width(), this.height());
+    this.player.frame.on('seek', function () {
+      self.loading();
+    });
+
+    this.player.frame.on('timeupdate', function () {
+      self.loading(false);
+    });
+
+    this.player.frame.video.onerrror = function (e) {
+      console.error(e);
+    };
+
+    this.player.frame.on('playing', function (e) {
+      self.player.controls.play(true);
+    });
+
+    this.player.frame.on('pause', function (e) {
+      self.player.controls.pause(true);
+    });
+
     this.emit('render');
   }
   return this;
@@ -138,6 +183,7 @@ SlantVideo.prototype.use = function (fn) {
 
 SlantVideo.prototype.play = function () {
   this.player.play();
+  this.playing = true;
   this.emit('play');
   return this;
 };
@@ -150,7 +196,32 @@ SlantVideo.prototype.play = function () {
 
 SlantVideo.prototype.pause = function () {
   this.player.pause();
+  this.playing = false;
   this.emit('pause');
+  return this;
+};
+
+/**
+ * Stops video
+ *
+ * @api public
+ */
+
+SlantVideo.prototype.stop = function () {
+  this.seek(0);
+  this.pause();
+  return this;
+};
+
+/**
+ * Replays video
+ *
+ * @api public
+ */
+
+SlantVideo.prototype.replay  = function () {
+  this.seek(0);
+  this.play();
   return this;
 };
 
@@ -217,17 +288,43 @@ SlantVideo.prototype.hide = function () {
 };
 
 /**
- * Shows video player dialog with optional
- * title and body
+ * Show overlay
  *
  * @api public
- * @param {String} title - optional
- * @param {String} body
+ * @param {Object|Boolean} opts - optional
  */
 
-SlantVideo.prototype.dialog = function (title, body) {
+SlantVideo.prototype.overlay = function (opts) {
+  if (false === opts) {
+    if (null != this._overlay) {
+      this._overlay.remove();
+      this._overlay = null;
+    }
+  } else {
+    // remove any existing overlays
+    this.overlay(false);
 
-  this.emit('dialog');
+    // ensure `opts' is an object
+    opts = 'object' == typeof opts ? opts : {};
+
+    // set target defaulting to instance node
+    opts.target = opts.target || this.el;
+
+    // init
+    this._overlay = overlay(opts);
+
+    // set body if defined
+    if ('string' == typeof opts.body) {
+      this._overlay.el.innerHTML = opts.body;
+    } else if (opts.body instanceof Element) {
+      this._overlay.el.appendChild(opts.body);
+    }
+
+    // show
+    this._overlay.show();
+    this.emit('overlay', this._overlay);
+  }
+
   return this;
 };
 
@@ -239,5 +336,13 @@ SlantVideo.prototype.dialog = function (title, body) {
  */
 
 SlantVideo.prototype.loading = function (show) {
+  if (false == show) {
+    this.overlay(false);
+  } else {
+    this.overlay(false).overlay({
+      body: require('./loading.html')
+    });
+  }
+
   return this;
 };

@@ -1,6 +1,35 @@
 
+.slant, .slant * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
 .slant.video {
   display: block;
+  position: relative;
   min-width: 500px;
   min-height: 250px;
+}
+
+.slant.video .overlay {
+
+}
+
+.slant.video .loading {
+  display: block;
+  position: relative;
+}
+
+.slant.video .loading span {
+  display: block;
+  position: relative;
+  margin: 0 auto;
+  margin-top: 25%;
+  color: #fff;
+  font-weight: 100;
+  font-family: Helvetica;
+  font-size: 14px;
 }

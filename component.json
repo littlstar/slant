@@ -3,24 +3,23 @@
   "version": "0.0.1",
   "description": "360 Video Player",
   "main": "index.js",
+
   "dependencies": {
     "littlstar/slant-player": "*",
+    "littlstar/slant-frame": "*",
     "component/emitter": "*",
-    "component/dialog": "*",
-    "component/domify": "*"
+    "component/events": "*",
+    "component/overlay": "*",
+    "component/domify": "*",
+    "component/raf": "*",
+    "yields/k": "*"
   },
 
-  "scripts": [
-    "index.js",
-    "dialog.js"
-  ],
-
-  "styles": [
-    "slant.css",
-    "dialog.css"
-  ],
+  "scripts": [ "index.js" ],
+  "styles": [ "slant.css" ],
 
   "templates": [
-    "template.html"
+    "template.html",
+    "loading.html"
   ]
 }

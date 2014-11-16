@@ -5,6 +5,5 @@ var video = slant.createPlayer(el, {
   //src: 'test.webm'
 });
 
-console.log(getComputedStyle(el))
 video.render();
 

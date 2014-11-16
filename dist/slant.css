@@ -79,7 +79,7 @@
 }
 
 .slant.controls ul li.playpause {
-  width: 7%;
+  width: 10%;
   vertical-align: middle;
 }
 
@@ -106,7 +106,7 @@
 }
 
 .slant.controls ul li.playpause a.pause {
-  left: 2%;
+  padding-left: 2%;
 }
 
 .slant.controls ul li.playpause a.replay {
@@ -115,17 +115,18 @@
 }
 
 .slant.controls ul li.progress {
-  width: 60%;
+  width: 58%;
   margin: 0;
-  margin-right: 5px;
+  margin-right: 1%;
+  margin-left: 1%;
   vertical-align: middle;
   background: #fff;
   cursor: pointer;
   opacity: 0.7;
 
-  webkit-transition: height 0.1s;
-  -webkit-transition: height 0.1s;
-          transition: height 0.1s;
+  webkit-transition: height 1s;
+  -webkit-transition: height 1s;
+          transition: height 1s;
 
   webkit-transition: opacity 0.1s;
   -webkit-transition: opacity 0.1s;
@@ -157,7 +158,12 @@
   border-radius: 2px;
 }
 
-.slant.controls ul li.progress .bar .gutter {
+.slant.controls ul li.progress .bar .played,
+.slant.controls ul li.progress .bar .loaded {
+  -moz-transition: width 0.08s;
+  webkit-transition: width 0.08s;
+  -webkit-transition: width 0.08s;
+          transition: width 0.08s;
 }
 
 .slant.controls ul li.progress .bar .played {
@@ -203,20 +209,20 @@
 }
 
 .slant.controls ul li.time {
-  width: 12%;
+  width: 10%;
   text-align: center;
-  line-height: 0.8;
+  line-height: 1;
   vertical-align: middle;
 }
 
 .slant.controls ul li.time span {
   display: inline-block;
   position: relative;
-  font-size: 11px;
+  font-size: .7em;
 }
 
 .slant.controls ul li.volume {
-  width: 12%;
+  width: 16%;
   opacity: 0.7;
 
   webkit-transition: opacity 0.1s;
@@ -231,10 +237,10 @@
 .slant.controls ul li.volume .control {
   display: inline-block;
   position: relative;
-  width: 40%;
-  max-width: 30px;
+  width: 10%;
   cursor: pointer;
   vertical-align: middle;
+  font-size: .8em;
 }
 
 .slant.controls ul li.volume .control.muted {
@@ -243,12 +249,12 @@
 }
 
 .slant.controls ul li.volume .panel {
-  display: inline-block;
+  display: block;
   position: relative;
   vertical-align: middle;
-  width: 50%;
-  margin: 5px 0;
-  background: #fff;
+  width: 80%;
+  margin: 0 auto;
+  background: #444;
   border-radius: 2px;
   cursor: pointer;
 }
@@ -266,7 +272,7 @@
   z-index: 10;
   width: 100%;
   padding: 3px 0px;
-  background: #444;
+  background: rgb(226, 226, 255);
   border-radius: 2px;
 }
 
@@ -275,9 +281,10 @@
   position: absolute;
   top: -5px;
   z-index: 15;
-  width: 7px;
+  width: 5px;
   height: 15px;
-  margin-left: -3px;
+  margin-left: -1px;
+  margin-right: -7px;
   border-radius: 2px;
   background: #fff;
   cursor: pointer;
@@ -319,6 +326,14 @@
   min-height: 250px;
 }
 
+.slant.player .frame {
+  z-index: 99;
+}
+
+.slant.player .controls {
+  z-index: 100;
+}
+
 
 
 .overlay {
@@ -344,91 +359,39 @@
 }
 
 
-.dialog {
-  position: fixed;
-  left: 50%;
-  top: 150px;
-  max-width: 600px;
-  min-width: 250px;
-  border: 1px solid #eee;
-  background: white;
-  z-index: 1000;
+
+.slant, .slant * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
-
-.dialog .content {
-  padding: 15px 20px;
-}
-
-/* close */
-
-.dialog .close {
-  position: absolute;
-  top: 3px;
-  right: 10px;
-  text-decoration: none;
-  color: #888;
-  font-size: 16px;
-  font-weight: bold;
-  display: none;
-}
-
-.dialog .close em {
-  display: none;
-}
-
-.dialog.closable .close {
-  display: block;
-}
-
-.dialog .close:hover {
-  color: black;
-}
-
-.dialog .close:active {
-  margin-top: 1px;
-}
-
-/* slide */
-
-.dialog.slide {
-  -webkit-transition: opacity 300ms, top 300ms;
-  -moz-transition: opacity 300ms, top 300ms;
-}
-
-.dialog.slide.hide {
-  opacity: 0;
-  top: -500px;
-}
-
-/* fade */
-
-.dialog.fade {
-  -webkit-transition: opacity 300ms;
-  -moz-transition: opacity 300ms;
-}
-
-.dialog.fade.hide {
-  opacity: 0;
-}
-
-/* scale */
-
-.dialog.scale {
-  -webkit-transition: -webkit-transform 300ms;
-  -webkit-transform: scale(1);
-  -moz-transform: scale(1);
-}
-
-.dialog.scale.hide {
-  -webkit-transform: scale(0);
-  -moz-transform: scale(0);
-}
-
 
 .slant.video {
   display: block;
+  position: relative;
   min-width: 500px;
   min-height: 250px;
+}
+
+.slant.video .overlay {
+
+}
+
+.slant.video .loading {
+  display: block;
+  position: relative;
+}
+
+.slant.video .loading span {
+  display: block;
+  position: relative;
+  margin: 0 auto;
+  margin-top: 25%;
+  color: #fff;
+  font-weight: 100;
+  font-family: Helvetica;
+  font-size: 14px;
 }
 
 
