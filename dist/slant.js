@@ -138,6 +138,117 @@ require.define = function (name, exports) {
     exports: exports
   };
 };
+require.register("component~domify@1.3.1", function (exports, module) {
+
+/**
+ * Expose `parse`.
+ */
+
+module.exports = parse;
+
+/**
+ * Tests for browser support.
+ */
+
+var div = document.createElement('div');
+// Setup
+div.innerHTML = '  <link/><table></table><a href="/a">a</a><input type="checkbox"/>';
+// Make sure that link elements get serialized correctly by innerHTML
+// This requires a wrapper element in IE
+var innerHTMLBug = !div.getElementsByTagName('link').length;
+div = undefined;
+
+/**
+ * Wrap map from jquery.
+ */
+
+var map = {
+  legend: [1, '<fieldset>', '</fieldset>'],
+  tr: [2, '<table><tbody>', '</tbody></table>'],
+  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
+  // for script/link/style tags to work in IE6-8, you have to wrap
+  // in a div with a non-whitespace character in front, ha!
+  _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
+};
+
+map.td =
+map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
+
+map.option =
+map.optgroup = [1, '<select multiple="multiple">', '</select>'];
+
+map.thead =
+map.tbody =
+map.colgroup =
+map.caption =
+map.tfoot = [1, '<table>', '</table>'];
+
+map.text =
+map.circle =
+map.ellipse =
+map.line =
+map.path =
+map.polygon =
+map.polyline =
+map.rect = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
+
+/**
+ * Parse `html` and return a DOM Node instance, which could be a TextNode,
+ * HTML DOM Node of some kind (<div> for example), or a DocumentFragment
+ * instance, depending on the contents of the `html` string.
+ *
+ * @param {String} html - HTML string to "domify"
+ * @param {Document} doc - The `document` instance to create the Node for
+ * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance
+ * @api private
+ */
+
+function parse(html, doc) {
+  if ('string' != typeof html) throw new TypeError('String expected');
+
+  // default to the global `document` object
+  if (!doc) doc = document;
+
+  // tag name
+  var m = /<([\w:]+)/.exec(html);
+  if (!m) return doc.createTextNode(html);
+
+  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+
+  var tag = m[1];
+
+  // body support
+  if (tag == 'body') {
+    var el = doc.createElement('html');
+    el.innerHTML = html;
+    return el.removeChild(el.lastChild);
+  }
+
+  // wrap map
+  var wrap = map[tag] || map._default;
+  var depth = wrap[0];
+  var prefix = wrap[1];
+  var suffix = wrap[2];
+  var el = doc.createElement('div');
+  el.innerHTML = prefix + html + suffix;
+  while (depth--) el = el.lastChild;
+
+  // one element
+  if (el.firstChild == el.lastChild) {
+    return el.removeChild(el.firstChild);
+  }
+
+  // several elements
+  var fragment = doc.createDocumentFragment();
+  while (el.firstChild) {
+    fragment.appendChild(el.removeChild(el.firstChild));
+  }
+
+  return fragment;
+}
+
+});
+
 require.register("component~emitter@1.1.3", function (exports, module) {
 
 /**
@@ -303,117 +414,6 @@ Emitter.prototype.listeners = function(event){
 Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
-
-});
-
-require.register("component~domify@1.3.1", function (exports, module) {
-
-/**
- * Expose `parse`.
- */
-
-module.exports = parse;
-
-/**
- * Tests for browser support.
- */
-
-var div = document.createElement('div');
-// Setup
-div.innerHTML = '  <link/><table></table><a href="/a">a</a><input type="checkbox"/>';
-// Make sure that link elements get serialized correctly by innerHTML
-// This requires a wrapper element in IE
-var innerHTMLBug = !div.getElementsByTagName('link').length;
-div = undefined;
-
-/**
- * Wrap map from jquery.
- */
-
-var map = {
-  legend: [1, '<fieldset>', '</fieldset>'],
-  tr: [2, '<table><tbody>', '</tbody></table>'],
-  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
-  // for script/link/style tags to work in IE6-8, you have to wrap
-  // in a div with a non-whitespace character in front, ha!
-  _default: innerHTMLBug ? [1, 'X<div>', '</div>'] : [0, '', '']
-};
-
-map.td =
-map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];
-
-map.option =
-map.optgroup = [1, '<select multiple="multiple">', '</select>'];
-
-map.thead =
-map.tbody =
-map.colgroup =
-map.caption =
-map.tfoot = [1, '<table>', '</table>'];
-
-map.text =
-map.circle =
-map.ellipse =
-map.line =
-map.path =
-map.polygon =
-map.polyline =
-map.rect = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'];
-
-/**
- * Parse `html` and return a DOM Node instance, which could be a TextNode,
- * HTML DOM Node of some kind (<div> for example), or a DocumentFragment
- * instance, depending on the contents of the `html` string.
- *
- * @param {String} html - HTML string to "domify"
- * @param {Document} doc - The `document` instance to create the Node for
- * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance
- * @api private
- */
-
-function parse(html, doc) {
-  if ('string' != typeof html) throw new TypeError('String expected');
-
-  // default to the global `document` object
-  if (!doc) doc = document;
-
-  // tag name
-  var m = /<([\w:]+)/.exec(html);
-  if (!m) return doc.createTextNode(html);
-
-  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
-
-  var tag = m[1];
-
-  // body support
-  if (tag == 'body') {
-    var el = doc.createElement('html');
-    el.innerHTML = html;
-    return el.removeChild(el.lastChild);
-  }
-
-  // wrap map
-  var wrap = map[tag] || map._default;
-  var depth = wrap[0];
-  var prefix = wrap[1];
-  var suffix = wrap[2];
-  var el = doc.createElement('div');
-  el.innerHTML = prefix + html + suffix;
-  while (depth--) el = el.lastChild;
-
-  // one element
-  if (el.firstChild == el.lastChild) {
-    return el.removeChild(el.firstChild);
-  }
-
-  // several elements
-  var fragment = doc.createDocumentFragment();
-  while (el.firstChild) {
-    fragment.appendChild(el.removeChild(el.firstChild));
-  }
-
-  return fragment;
-}
 
 });
 
@@ -778,1646 +778,6 @@ function parse(event) {
 }
 
 });
-
-require.register("mnmly~css-matrix@component-js", function (exports, module) {
-
-// a CSSMatrix shim
-// http://www.w3.org/TR/css3-3d-transforms/#cssmatrix-interface
-// http://www.w3.org/TR/css3-2d-transforms/#cssmatrix-interface
-
-/**
- * CSSMatrix Shim
- * @constructor
- */
-var CSSMatrix = module.exports = function(){
-	var a = [].slice.call(arguments);
-	if (a.length) for (var i = a.length; i--;){
-		if (Math.abs(a[i]) < CSSMatrix.SMALL_NUMBER) a[i] = 0;
-	}
-	this.setIdentity();
-	if (a.length == 16){
-		this.m11 = a[0];  this.m12 = a[1];  this.m13 = a[2];  this.m14 = a[3];
-		this.m21 = a[4];  this.m22 = a[5];  this.m23 = a[6];  this.m24 = a[7];
-		this.m31 = a[8];  this.m32 = a[9];  this.m33 = a[10]; this.m34 = a[11];
-		this.m41 = a[12]; this.m42 = a[13]; this.m43 = a[14]; this.m44 = a[15];
-	} else if (a.length == 6) {
-		this.affine = true;
-		this.m11 = this.a = a[0]; this.m12 = this.b = a[1]; this.m14 = this.e = a[4];
-		this.m21 = this.c = a[2]; this.m22 = this.d = a[3]; this.m24 = this.f = a[5];
-	}
-};
-
-CSSMatrix.SMALL_NUMBER = 1e-8;
-
-// Transformations
-
-// http://en.wikipedia.org/wiki/Rotation_matrix
-
-CSSMatrix.Rotate = function(rx, ry, rz){
-	rx *= Math.PI / 180;
-	ry *= Math.PI / 180;
-	rz *= Math.PI / 180;
-	// minus sin() because of right-handed system
-	var cosx = Math.cos(rx), sinx = - Math.sin(rx);
-	var cosy = Math.cos(ry), siny = - Math.sin(ry);
-	var cosz = Math.cos(rz), sinz = - Math.sin(rz);
-	var m = new CSSMatrix();
-
-	m.m11 = cosy * cosz;
-	m.m12 = - cosx * sinz + sinx * siny * cosz;
-	m.m13 = sinx * sinz + cosx * siny * cosz;
-
-	m.m21 = cosy * sinz;
-	m.m22 = cosx * cosz + sinx * siny * sinz;
-	m.m23 = - sinx * cosz + cosx * siny * sinz;
-
-	m.m31 = - siny;
-	m.m32 = sinx * cosy;
-	m.m33 = cosx * cosy;
-
-	return m;
-};
-
-CSSMatrix.RotateAxisAngle = function(x, y, z, angle){
-	angle *= Math.PI / 180;
-	var m = new CSSMatrix(), cos = Math.cos(angle), sin = Math.sin(angle);
-	var cos1 = 1 - cos;
-
-	m.m11 = cos + x * x * cos1;
-	m.m12 = x * y * cos1 - z * sin;
-	m.m13 = x * z * cos1 - y * sin;
-
-	m.m21 = y * x * cos1 + z * sin;
-	m.m22 = cos * y * y * cos1;
-	m.m21 = y * z * cos1 - x * sin;
-
-	m.m31 = z * x * cos1 - y * sin;
-	m.m32 = z * y * cos1 + x * sin;
-	m.m33 = cos + z * z * cos1;
-
-	return m;
-};
-
-CSSMatrix.ScaleX = function(x){
-	var m = new CSSMatrix();
-	m.m11 = x;
-	return m;
-};
-
-CSSMatrix.ScaleY = function(y){
-	var m = new CSSMatrix();
-	m.m22 = y;
-	return m;
-};
-
-CSSMatrix.ScaleZ = function(z){
-	var m = new CSSMatrix();
-	m.m33 = z;
-	return m;
-};
-
-CSSMatrix.Scale = function(x, y, z){
-	var m = new CSSMatrix();
-	m.m11 = x;
-	m.m22 = y;
-	m.m33 = z;
-	return m;
-};
-
-CSSMatrix.SkewX = function(angle){
-	angle *= Math.PI / 180;
-	var m = new CSSMatrix();
-	m.m21 = Math.tan(angle);
-	return m;
-};
-
-CSSMatrix.SkewY = function(angle){
-	angle *= Math.PI / 180;
-	var m = new CSSMatrix();
-	m.m12 = Math.tan(angle);
-	return m;
-};
-
-CSSMatrix.Translate = function(x, y, z){
-	var m = new CSSMatrix();
-	m.m14 = x;
-	m.m24 = y;
-	m.m34 = z;
-	return m;
-};
-
-CSSMatrix.multiply = function(m1, m2){
-
-	var m11 = m1.m11 * m2.m11 + m1.m12 * m2.m21 + m1.m13 * m2.m31 + m1.m14 * m2.m41,
-		m12 = m1.m11 * m2.m12 + m1.m12 * m2.m22 + m1.m13 * m2.m32 + m1.m14 * m2.m42,
-		m13 = m1.m11 * m2.m13 + m1.m12 * m2.m23 + m1.m13 * m2.m33 + m1.m14 * m2.m43,
-		m14 = m1.m11 * m2.m14 + m1.m12 * m2.m24 + m1.m13 * m2.m34 + m1.m14 * m2.m44,
-
-		m21 = m1.m21 * m2.m11 + m1.m22 * m2.m21 + m1.m23 * m2.m31 + m1.m24 * m2.m41,
-		m22 = m1.m21 * m2.m12 + m1.m22 * m2.m22 + m1.m23 * m2.m32 + m1.m24 * m2.m42,
-		m23 = m1.m21 * m2.m13 + m1.m22 * m2.m23 + m1.m23 * m2.m33 + m1.m24 * m2.m43,
-		m24 = m1.m21 * m2.m14 + m1.m22 * m2.m24 + m1.m23 * m2.m34 + m1.m24 * m2.m44,
-
-		m31 = m1.m31 * m2.m11 + m1.m32 * m2.m21 + m1.m33 * m2.m31 + m1.m34 * m2.m41,
-		m32 = m1.m31 * m2.m12 + m1.m32 * m2.m22 + m1.m33 * m2.m32 + m1.m34 * m2.m42,
-		m33 = m1.m31 * m2.m13 + m1.m32 * m2.m23 + m1.m33 * m2.m33 + m1.m34 * m2.m43,
-		m34 = m1.m31 * m2.m14 + m1.m32 * m2.m24 + m1.m33 * m2.m34 + m1.m34 * m2.m44,
-
-		m41 = m1.m41 * m2.m11 + m1.m42 * m2.m21 + m1.m43 * m2.m31 + m1.m44 * m2.m41,
-		m42 = m1.m41 * m2.m12 + m1.m42 * m2.m22 + m1.m43 * m2.m32 + m1.m44 * m2.m42,
-		m43 = m1.m41 * m2.m13 + m1.m42 * m2.m23 + m1.m43 * m2.m33 + m1.m44 * m2.m43,
-		m44 = m1.m41 * m2.m14 + m1.m42 * m2.m24 + m1.m43 * m2.m34 + m1.m44 * m2.m44;
-
-	return new CSSMatrix(
-		m11, m12, m13, m14,
-		m21, m22, m23, m24,
-		m31, m32, m33, m34,
-		m41, m42, m43, m44
-	);
-};
-
-// w3c defined methods
-
-/**
- * The setMatrixValue method replaces the existing matrix with one computed
- * from parsing the passed string as though it had been assigned to the
- * transform property in a CSS style rule.
- * @param {String} string The string to parse.
- */
-CSSMatrix.prototype.setMatrixValue = function(string){
-	string = String(string).trim();
-	var m = this;
-	m.setIdentity();
-	if (string == 'none') return m;
-	var type = string.slice(0, string.indexOf('(')), parts, i;
-	if (type == 'matrix3d'){
-		parts = string.slice(9, -1).split(',');
-		for (i = parts.length; i--;) parts[i] = parseFloat(parts[i]);
-		m.m11 = parts[0]; m.m12 = parts[4]; m.m13 = parts[8];  m.m14 = parts[12];
-		m.m21 = parts[1]; m.m22 = parts[5]; m.m23 = parts[9];  m.m24 = parts[13];
-		m.m31 = parts[2]; m.m32 = parts[6]; m.m33 = parts[10]; m.m34 = parts[14];
-		m.m41 = parts[3]; m.m42 = parts[7]; m.m43 = parts[11]; m.m44 = parts[15];
-	} else if (type == 'matrix'){
-		m.affine = true;
-		parts = string.slice(7, -1).split(',');
-		for (i = parts.length; i--;) parts[i] = parseFloat(parts[i]);
-		m.m11 = m.a = parts[0]; m.m12 = m.b = parts[2]; m.m14 = m.e = parts[4];
-		m.m21 = m.c = parts[1]; m.m22 = m.d = parts[3]; m.m24 = m.f = parts[5];
-	} else {
-		throw new TypeError('Invalid Matrix Value');
-	}
-	return m;
-};
-
-/**
- * The multiply method returns a new CSSMatrix which is the result of this
- * matrix multiplied by the passed matrix, with the passed matrix to the right.
- * This matrix is not modified.
- *
- * @param {CSSMatrix} m2
- * @return {CSSMatrix} The result matrix.
- */
-CSSMatrix.prototype.multiply = function(m2){
-	return CSSMatrix.multiply(this, m2);
-};
-
-/**
- * The inverse method returns a new matrix which is the inverse of this matrix.
- * This matrix is not modified.
- *
- * method not implemented yet
- */
-CSSMatrix.prototype.inverse = function(){
-	throw new Error('the inverse() method is not implemented (yet).');
-};
-
-/**
- * The translate method returns a new matrix which is this matrix post
- * multiplied by a translation matrix containing the passed values. If the z
- * component is undefined, a 0 value is used in its place. This matrix is not
- * modified.
- *
- * @param {number} x X component of the translation value.
- * @param {number} y Y component of the translation value.
- * @param {number=} z Z component of the translation value.
- * @return {CSSMatrix} The result matrix
- */
-CSSMatrix.prototype.translate = function(x, y, z){
-	if (z == null) z = 0;
-	return CSSMatrix.multiply(this, new CSSMatrix.Translate(x, y, z));
-};
-
-/**
- * The scale method returns a new matrix which is this matrix post multiplied by
- * a scale matrix containing the passed values. If the z component is undefined,
- * a 1 value is used in its place. If the y component is undefined, the x
- * component value is used in its place. This matrix is not modified.
- *
- * @param {number} x The X component of the scale value.
- * @param {number=} y The Y component of the scale value.
- * @param {number=} z The Z component of the scale value.
- * @return {CSSMatrix} The result matrix
- */
-CSSMatrix.prototype.scale = function(x, y, z){
-	if (y == null) y = x;
-	if (z == null) z = 1;
-	return CSSMatrix.multiply(this, new CSSMatrix.Scale(x, y, z));
-};
-
-/**
- * The rotate method returns a new matrix which is this matrix post multiplied
- * by each of 3 rotation matrices about the major axes, first X, then Y, then Z.
- * If the y and z components are undefined, the x value is used to rotate the
- * object about the z axis, as though the vector (0,0,x) were passed. All
- * rotation values are in degrees. This matrix is not modified.
- *
- * @param {number} rx The X component of the rotation value, or the Z component if the rotY and rotZ parameters are undefined.
- * @param {number=} ry The (optional) Y component of the rotation value.
- * @param {number=} rz The (optional) Z component of the rotation value.
- * @return {CSSMatrix} The result matrix
- */
-CSSMatrix.prototype.rotate = function(rx, ry, rz){
-	if (ry == null) ry = rx;
-	if (rz == null) rz = rx;
-	return CSSMatrix.multiply(this, new CSSMatrix.Rotate(rx, ry, rz));
-};
-
-/**
- * The rotateAxisAngle method returns a new matrix which is this matrix post
- * multiplied by a rotation matrix with the given axis and angle. The right-hand
- * rule is used to determine the direction of rotation. All rotation values are
- * in degrees. This matrix is not modified.
- *
- * @param {number} x The X component of the axis vector.
- * @param {number=} y The Y component of the axis vector.
- * @param {number=} z The Z component of the axis vector.
- * @param {number} angle The angle of rotation about the axis vector, in degrees.
- * @return {CSSMatrix} The result matrix
- */
-CSSMatrix.prototype.rotateAxisAngle = function(x, y, z, angle){
-	if (y == null) y = x;
-	if (z == null) z = x;
-	return CSSMatrix.multiply(this, new CSSMatrix.RotateAxisAngle(x, y, z, angle));
-};
-
-// Defined in WebKitCSSMatrix, but not in the w3c draft
-
-/**
- * Specifies a skew transformation along the x-axis by the given angle.
- *
- * @param {number} angle The angle amount in degrees to skew.
- * @return {CSSMatrix} The result matrix
- */
-CSSMatrix.prototype.skewX = function(angle){
-	return CSSMatrix.multiply(this, new CSSMatrix.SkewX(angle));
-};
-
-/**
- * Specifies a skew transformation along the x-axis by the given angle.
- *
- * @param {number} angle The angle amount in degrees to skew.
- * @return {CSSMatrix} The result matrix
- */
-CSSMatrix.prototype.skewY = function(angle){
-	return CSSMatrix.multiply(this, new CSSMatrix.SkewY(angle));
-};
-
-/**
- * Returns a string representation of the matrix.
- * @return {string}
- */
-CSSMatrix.prototype.toString = function(){
-	var m = this;
-	if (this.affine){
-		return  'matrix(' + [
-			m.m11, m.m12,
-			m.m21, m.m22,
-			m.m14, m.m24
-		].join(', ') + ')';
-	}
-	// note: the elements here are transposed
-	return  'matrix3d(' + [
-		m.m11, m.m21, m.m31, m.m41,
-		m.m12, m.m22, m.m32, m.m42,
-		m.m13, m.m23, m.m33, m.m43,
-		m.m14, m.m24, m.m34, m.m44
-	].join(', ') + ')';
-};
-
-// Additional methods
-
-/**
- * Set the current matrix to the identity form
- *
- * @return {CSSMatrix} this matrix
- */
-CSSMatrix.prototype.setIdentity = function(){
-	var m = this;
-	m.m11 = 1; m.m12 = 0; m.m13 = 0; m.m14 = 0;
-	m.m21 = 0; m.m22 = 1; m.m23 = 0; m.m24 = 0;
-	m.m31 = 0; m.m32 = 0; m.m33 = 1; m.m34 = 0;
-	m.m41 = 0; m.m42 = 0; m.m43 = 0; m.m44 = 1;
-	return this;
-};
-
-/**
- * Transform a tuple (3d point) with this CSSMatrix
- *
- * @param {Tuple} an object with x, y, z and w properties
- * @return {Tuple} the passed tuple
- */
-CSSMatrix.prototype.transform = function(t /* tuple */ ){
-	var m = this;
-
-	var x = m.m11 * t.x + m.m12 * t.y + m.m13 * t.z + m.m14 * t.w,
-		y = m.m21 * t.x + m.m22 * t.y + m.m23 * t.z + m.m24 * t.w,
-		z = m.m31 * t.x + m.m32 * t.y + m.m33 * t.z + m.m34 * t.w,
-		w = m.m41 * t.x + m.m42 * t.y + m.m43 * t.z + m.m44 * t.w;
-
-	t.x = x / w;
-	t.y = y / w;
-	t.z = z / w;
-
-	return t;
-};
-
-CSSMatrix.prototype.toFullString = function(){
-	var m = this;
-	return [
-		[m.m11, m.m12, m.m13, m.m14].join(', '),
-		[m.m21, m.m22, m.m23, m.m24].join(', '),
-		[m.m31, m.m32, m.m33, m.m34].join(', '),
-		[m.m41, m.m42, m.m43, m.m44].join(', ')
-	].join('\n');
-};
-
-});
-
-require.register("mnmly~constrain@master", function (exports, module) {
-/**
- * Expose `constrain`
- */
-
-module.exports = constrain;
-
-/**
-  * Constrains a value to not exceed a maximum and minimum value.
-  *
-  * @param {int|float} value   the value to constrain
-  * @param {int|float} value   minimum limit
-  * @param {int|float} value   maximum limit
-  *
-  * @returns {int|float}
-  */
-
-function constrain( aNumber, aMin, aMax ) {
-  return aNumber > aMax ? aMax : aNumber < aMin ? aMin : aNumber;
-};
-
-});
-
-require.register("component~indexof@0.0.3", function (exports, module) {
-module.exports = function(arr, obj){
-  if (arr.indexOf) return arr.indexOf(obj);
-  for (var i = 0; i < arr.length; ++i) {
-    if (arr[i] === obj) return i;
-  }
-  return -1;
-};
-});
-
-require.register("component~classes@1.2.1", function (exports, module) {
-/**
- * Module dependencies.
- */
-
-var index = require('component~indexof@0.0.3');
-
-/**
- * Whitespace regexp.
- */
-
-var re = /\s+/;
-
-/**
- * toString reference.
- */
-
-var toString = Object.prototype.toString;
-
-/**
- * Wrap `el` in a `ClassList`.
- *
- * @param {Element} el
- * @return {ClassList}
- * @api public
- */
-
-module.exports = function(el){
-  return new ClassList(el);
-};
-
-/**
- * Initialize a new ClassList for `el`.
- *
- * @param {Element} el
- * @api private
- */
-
-function ClassList(el) {
-  if (!el) throw new Error('A DOM element reference is required');
-  this.el = el;
-  this.list = el.classList;
-}
-
-/**
- * Add class `name` if not already present.
- *
- * @param {String} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.add = function(name){
-  // classList
-  if (this.list) {
-    this.list.add(name);
-    return this;
-  }
-
-  // fallback
-  var arr = this.array();
-  var i = index(arr, name);
-  if (!~i) arr.push(name);
-  this.el.className = arr.join(' ');
-  return this;
-};
-
-/**
- * Remove class `name` when present, or
- * pass a regular expression to remove
- * any which match.
- *
- * @param {String|RegExp} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.remove = function(name){
-  if ('[object RegExp]' == toString.call(name)) {
-    return this.removeMatching(name);
-  }
-
-  // classList
-  if (this.list) {
-    this.list.remove(name);
-    return this;
-  }
-
-  // fallback
-  var arr = this.array();
-  var i = index(arr, name);
-  if (~i) arr.splice(i, 1);
-  this.el.className = arr.join(' ');
-  return this;
-};
-
-/**
- * Remove all classes matching `re`.
- *
- * @param {RegExp} re
- * @return {ClassList}
- * @api private
- */
-
-ClassList.prototype.removeMatching = function(re){
-  var arr = this.array();
-  for (var i = 0; i < arr.length; i++) {
-    if (re.test(arr[i])) {
-      this.remove(arr[i]);
-    }
-  }
-  return this;
-};
-
-/**
- * Toggle class `name`, can force state via `force`.
- *
- * For browsers that support classList, but do not support `force` yet,
- * the mistake will be detected and corrected.
- *
- * @param {String} name
- * @param {Boolean} force
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.toggle = function(name, force){
-  // classList
-  if (this.list) {
-    if ("undefined" !== typeof force) {
-      if (force !== this.list.toggle(name, force)) {
-        this.list.toggle(name); // toggle again to correct
-      }
-    } else {
-      this.list.toggle(name);
-    }
-    return this;
-  }
-
-  // fallback
-  if ("undefined" !== typeof force) {
-    if (!force) {
-      this.remove(name);
-    } else {
-      this.add(name);
-    }
-  } else {
-    if (this.has(name)) {
-      this.remove(name);
-    } else {
-      this.add(name);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return an array of classes.
- *
- * @return {Array}
- * @api public
- */
-
-ClassList.prototype.array = function(){
-  var str = this.el.className.replace(/^\s+|\s+$/g, '');
-  var arr = str.split(re);
-  if ('' === arr[0]) arr.shift();
-  return arr;
-};
-
-/**
- * Check if class `name` is present.
- *
- * @param {String} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.has =
-ClassList.prototype.contains = function(name){
-  return this.list
-    ? this.list.contains(name)
-    : !! ~index(this.array(), name);
-};
-
-});
-
-require.register("component~classes@1.2.2", function (exports, module) {
-/**
- * Module dependencies.
- */
-
-var index = require('component~indexof@0.0.3');
-
-/**
- * Whitespace regexp.
- */
-
-var re = /\s+/;
-
-/**
- * toString reference.
- */
-
-var toString = Object.prototype.toString;
-
-/**
- * Wrap `el` in a `ClassList`.
- *
- * @param {Element} el
- * @return {ClassList}
- * @api public
- */
-
-module.exports = function(el){
-  return new ClassList(el);
-};
-
-/**
- * Initialize a new ClassList for `el`.
- *
- * @param {Element} el
- * @api private
- */
-
-function ClassList(el) {
-  if (!el) throw new Error('A DOM element reference is required');
-  this.el = el;
-  this.list = el.classList;
-}
-
-/**
- * Add class `name` if not already present.
- *
- * @param {String} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.add = function(name){
-  // classList
-  if (this.list) {
-    this.list.add(name);
-    return this;
-  }
-
-  // fallback
-  var arr = this.array();
-  var i = index(arr, name);
-  if (!~i) arr.push(name);
-  this.el.className = arr.join(' ');
-  return this;
-};
-
-/**
- * Remove class `name` when present, or
- * pass a regular expression to remove
- * any which match.
- *
- * @param {String|RegExp} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.remove = function(name){
-  if ('[object RegExp]' == toString.call(name)) {
-    return this.removeMatching(name);
-  }
-
-  // classList
-  if (this.list) {
-    this.list.remove(name);
-    return this;
-  }
-
-  // fallback
-  var arr = this.array();
-  var i = index(arr, name);
-  if (~i) arr.splice(i, 1);
-  this.el.className = arr.join(' ');
-  return this;
-};
-
-/**
- * Remove all classes matching `re`.
- *
- * @param {RegExp} re
- * @return {ClassList}
- * @api private
- */
-
-ClassList.prototype.removeMatching = function(re){
-  var arr = this.array();
-  for (var i = 0; i < arr.length; i++) {
-    if (re.test(arr[i])) {
-      this.remove(arr[i]);
-    }
-  }
-  return this;
-};
-
-/**
- * Toggle class `name`, can force state via `force`.
- *
- * For browsers that support classList, but do not support `force` yet,
- * the mistake will be detected and corrected.
- *
- * @param {String} name
- * @param {Boolean} force
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.toggle = function(name, force){
-  // classList
-  if (this.list) {
-    if ("undefined" !== typeof force) {
-      if (force !== this.list.toggle(name, force)) {
-        this.list.toggle(name); // toggle again to correct
-      }
-    } else {
-      this.list.toggle(name);
-    }
-    return this;
-  }
-
-  // fallback
-  if ("undefined" !== typeof force) {
-    if (!force) {
-      this.remove(name);
-    } else {
-      this.add(name);
-    }
-  } else {
-    if (this.has(name)) {
-      this.remove(name);
-    } else {
-      this.add(name);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return an array of classes.
- *
- * @return {Array}
- * @api public
- */
-
-ClassList.prototype.array = function(){
-  var str = this.el.className.replace(/^\s+|\s+$/g, '');
-  var arr = str.split(re);
-  if ('' === arr[0]) arr.shift();
-  return arr;
-};
-
-/**
- * Check if class `name` is present.
- *
- * @param {String} name
- * @return {ClassList}
- * @api public
- */
-
-ClassList.prototype.has =
-ClassList.prototype.contains = function(name){
-  return this.list
-    ? this.list.contains(name)
-    : !! ~index(this.array(), name);
-};
-
-});
-
-require.register("mnmly~drag@master", function (exports, module) {
-/**
- * Module dependencies
- */
-
-var events    = require('component~events@1.0.9'),
-    classes   = require('component~classes@1.2.2'),
-    constrain = require('mnmly~constrain@master'),
-    CSSMatrix = require('mnmly~css-matrix@component-js'),
-    Emitter   = require('component~emitter@1.1.3');
-
-/**
- * Export `Drag`
- */
-
-module.exports = Drag;
-
-/**
- * Firefox flag
- */
-
-var isFF = navigator.userAgent.search('Firefox') > -1;
-
-/**
- * Turn `el` into draggable element.
- *
- * Emits:
- *
- *   - `dragstart` when drag starts
- *   - `drag` when dragging
- *   - `dragend` when drag finishes
- *
- * Options:
- *   - `smooth` enables `translate3d` positioning
- *   - `axis` constrains drag direction ['x'|'y']
- *   - `range` constrains range of movement
- *
- * @param {Element} el
- * @param {Object} options optionally set `smooth` and `axis`
- * @api public
- */
-
-function Drag( el, options ){
-  if ( !( this instanceof Drag ) ) return new Drag( el, options );
-  if ( !el ) throw new TypeError( 'Drag() requires an element' );
-  options = options || { };
-  Emitter.call( this );
-  this.el     = el;
-  this.smooth = options.smooth || false;
-  this.axis   = options.axis || '';
-  this.range  = options.range || { x: null, y: null };
-  this.bind();
-}
-
-/**
- * Inherit `Emitter`
- */
-
-Drag.prototype.__proto__ = Emitter.prototype;
-
-/**
- * Bind event handlers
- *
- * @api public
- */
-
-Drag.prototype.bind = function() {
-  this.events = events( this.el, this );
-  this.docEvents = events( document, this );
-  this.events.bind( 'touchstart' );
-  this.events.bind( 'mousedown', 'ontouchstart' );
-};
-
-/**
- * Unbind event handlers
- *
- * @api public
- */
-
-Drag.prototype.unbind = function() {
-  this.events.unbind();
-};
-
-/**
- * Handle touchstart
- *
- * We capture the location of the element and mouse,
- * also binds `touchmove`, `touchend` events to `document`.
- *
- * @api private
- */
-
-Drag.prototype.ontouchstart = function( e ) {
-  e.stopPropagation();
-  if ( e.touches ) e = e.touches[0];
-  classes( this.el ).add( 'is-dragging' );
-  this.originX = this.el.offsetLeft;
-  this.originY = this.el.offsetTop;
-  this.startX  = e.pageX;
-  this.startY  = e.pageY;
-  if( this.smooth ){
-    var translate   = this.getTranslate();
-    this.translateX = translate.x;
-    this.translateY = translate.y;
-  }
-  this.docEvents.bind( 'touchmove' );
-  this.docEvents.bind( 'mousemove', 'ontouchmove' );
-  this.docEvents.bind( 'touchend' );
-  this.docEvents.bind( 'mouseup', 'ontouchend' );
-  this.emit( 'dragstart' , e );
-};
-
-/**
- * Handle touchmove
- *
- * Move element.
- *
- * @api private
- */
-
-Drag.prototype.ontouchmove = function( e ) {
-  e.stopPropagation();
-  e.preventDefault();
-  var x = this.originX + ( e.pageX - this.startX ),
-      y = this.originY + ( e.pageY - this.startY );
-  if( this.smooth ){
-
-    x -= this.originX - this.translateX;
-    y -= this.originY - this.translateY;
-
-    var constrained = this.constrain( x, y );
-    this.x = constrained.x;
-    this.y = constrained.y;
-
-    this.setPosition( this.x, this.y );
-  } else {
-    var constrained = this.constrain( x, y );
-    this.x = constrained.x
-    this.y = constrained.y;
-    this.setPosition( this.x, this.y );
-
-  }
-  this.emit( 'drag', e );
-};
-
-/**
- * Handle touchend
- *
- * Once drag finishes, unbinds all the events attached to `document`
- *
- * @api private
- */
-
-Drag.prototype.ontouchend = function( e ) {
-  classes( this.el ).remove( 'is-dragging' );
-  this.docEvents.unbind();
-  this.emit( 'dragend', e );
-};
-
-/**
- * Returns translate value
- *
- * @return {Object} x and y coordinate of `translate3d`
- *
- * @api private
- */
-
-Drag.prototype.getTranslate = function( ) {
-  var x = 0, y = 0,
-      transform = getComputedStyle( this.el )[isFF ? 'transform' : 'webkitTransform'],
-      matrix, rawMatrix;
-  if( transform != 'none' ){
-    if( isFF ) {
-      rawMatrix = transform.replace(/[a-z\(\)(3d)]/g, '').split( ',' ).map( function(v){ return v * 1; } );
-      matrix = new CSSMatrix();
-      CSSMatrix.apply( matrix, rawMatrix );
-    } else {
-      matrix = new WebKitCSSMatrix( transform );
-    }
-    x = matrix.m41;
-    y = matrix.m42;
-  }
-  return { x: x, y: y };
-};
-
-
-/**
- * Constrains `x`, `y`
- *
- * @param {Number} x
- * @param {Number} y
- *
- * @api private
- */
-
-Drag.prototype.constrain = function( x, y ) {
-  var x = this.range.x ? constrain( x, this.range.x[0], this.range.x[1] ) : x,
-      y = this.range.y ? constrain( y, this.range.y[0], this.range.y[1] ) : y;
-
-  if( this.axis === 'x' ) y = 0;
-  if( this.axis === 'y' ) x = 0;
-
-  return { x: x, y: y };
-};
-
-
-/**
- * Explicitly sets position of the object
- *
- * @param {Number} x
- * @param {Number} y
- *
- * @api public
- */
-
-Drag.prototype.setPosition = function( x, y ) {
-  if ( this.smooth ) {
-    this.el.style.webkitTransform =
-       this.el.style.mozTransform =
-        this.el.style.msTransform =
-          this.el.style.transform = 'translate3d( ' + (x||0) + 'px, ' + (y||0) + 'px , 0.0001px )'; // need to force `matrix3d`
-
-  } else {
-    this.el.style.left = x + 'px';
-    this.el.style.top  = y + 'px';
-  }
-}
-
-
-});
-
-require.register("component~raf@1.2.0", function (exports, module) {
-/**
- * Expose `requestAnimationFrame()`.
- */
-
-exports = module.exports = window.requestAnimationFrame
-  || window.webkitRequestAnimationFrame
-  || window.mozRequestAnimationFrame
-  || fallback;
-
-/**
- * Fallback implementation.
- */
-
-var prev = new Date().getTime();
-function fallback(fn) {
-  var curr = new Date().getTime();
-  var ms = Math.max(0, 16 - (curr - prev));
-  var req = setTimeout(fn, ms);
-  prev = curr;
-  return req;
-}
-
-/**
- * Cancel.
- */
-
-var cancel = window.cancelAnimationFrame
-  || window.webkitCancelAnimationFrame
-  || window.mozCancelAnimationFrame
-  || window.clearTimeout;
-
-exports.cancel = function(id){
-  cancel.call(window, id);
-};
-
-});
-
-require.register("littlstar~slant-controls@0.1.3", function (exports, module) {
-
-/**
- * Module dependencies
- */
-
-var tpl = require('littlstar~slant-controls@0.1.3/template.html')
-  , dom = require('component~domify@1.3.1')
-  , events = require('component~events@1.0.9')
-  , emitter = require('component~emitter@1.1.3')
-  , drag = require('mnmly~drag@master')
-  , raf = require('component~raf@1.2.0')
-
-var int = parseInt;
-var float = parseFloat;
-
-function parseDuration (seconds) {
-  var h = int(seconds / (60 * 60));
-  var m = int(seconds / 60);
-  var s = int((m / 60) || seconds);
-  var ms = int(s * 1000);
-  return {
-    hours: h,
-    minutes: m,
-    seconds: s,
-    milliseconds: ms
-  };
-}
-
-function formatDuration (duration, format) {
-  var h = duration.hours;
-  var m = duration.minutes;
-  var s = duration.seconds;
-  var ms = duration.milliseconds;
-
-  format = format || 'm:s';
-
-  function pad (n) {
-    return String(n < 10 ? '0'+n : n);
-  }
-
-  h = pad(h);
-  m = pad(m);
-  s = pad(s);
-  ms = pad(ms);
-
-  return format.split(':').map(function (k) {
-    switch (k) {
-      case 'h': return h;
-      case 'm': return m;
-      case 's': return s;
-      case 'ms': return ms;
-      default: return null;
-    }
-  }).filter(Boolean).join(':');
-}
-
-/**
- * `Controls' constructor
- *
- * @api public
- * @param {Frame} frame
- * @param {Object} opts
- */
-
-module.exports = Controls
-function Controls (frame, opts) {
-  if (!(this instanceof Controls)) {
-    return new Controls(frame, opts);
-  }
-
-  opts = opts || {};
-
-  var self = this;
-
-  this.frame = frame.render();
-  this.el = dom(tpl);
-  this.scrubbing = false;
-  this.ready = false;
-  this.paused = true;
-  this.muted = frame.video.muted;
-  this.events = events(this.el, this);
-  this.events.bind('click', 'onclick');
-
-  // play/pause handles
-  this.events.bind('click .playpause .play', 'onplayclick');
-  this.events.bind('click .playpause .replay', 'onplayclick');
-  this.events.bind('click .playpause .pause', 'onplayclick');
-
-  // track scrubbing
-  this.events.bind('click .progress .played', 'onscrubclick');
-  this.events.bind('click .progress .loaded', 'onscrubclick');
-
-  // volume control
-  this.events.bind('click .volume .control', 'onmuteclick');
-  this.events.bind('mouseover .volume', 'onvolumefocus');
-  this.events.bind('mouseout .volume', 'onvolumeblur');
-  this.events.bind('click .volume .panel', 'onvolumeclick');
-
-  var progress = this.el.querySelector('.progress');
-  var played = progress.querySelector('.played');
-  var loaded = progress.querySelector('.loaded');
-  var scrub = progress.querySelector('.scrub');
-
-  var time = this.el.querySelector('.time');
-  var current = time.querySelector('.current');
-  var duration = time.querySelector('.duration');
-
-  var volume = this.el.querySelector('.volume');
-  var volumeControl = volume.querySelector('.control');
-  var volumePanel = volume.querySelector('.panel');
-  var volumeSlider = volume.querySelector('.slider');
-  var volumeHandle = volume.querySelector('.handle');
-  var volumeLevel = volume.querySelector('.level');
-
-  this.vol = drag(volumeHandle, {
-    smooth: true,
-    range: {x: [0, 100]},
-    axis: 'x'
-  });
-
-  this.scrub = drag(scrub, {
-    smooth: true,
-    range: {x: [0, 100]},
-    axis: 'x'
-  });
-
-  if (opts.separator) {
-    time.querySelector('.separator').innerHTML = opts.separator;
-  }
-
-  this.scrub.on('dragstart', function (e) {
-    self.scrubbing = true;
-    self.emit('scrubstart', e);
-  });
-
-  this.scrub.on('drag', function (e) {
-    self.scrubbing = true;
-    self.emit('scrub', e);
-  });
-
-  this.vol.on('drag', function (e) {
-    var x = self.vol.x;
-    var w = float(getComputedStyle(volumeSlider, null).width);
-    var p = x / w;
-    var v = w * self.frame.video.volume;
-
-    raf(function () {
-      volumeLevel.style.width = v +'px';
-    });
-
-    self.frame.volume(p);
-
-    self.emit('volume');
-  });
-
-  this.scrub.on('dragend', function (e) {
-    var x = self.scrub.x;
-    var w = float(getComputedStyle(scrub.parentElement, null).width);
-    var d = self.frame.video.duration;
-    var p = x / w;
-    var s = d * p;
-
-    self.scrubbing = false;
-    self.seek(s);
-    self.emit('scrubend', e);
-  });
-
-  this.frame.on('ready', function () {
-    var dur = null;
-
-    // format current time
-    dur = parseDuration(self.frame.state.time);
-    current.innerHTML = formatDuration(dur);
-
-    // format total duration
-    dur = parseDuration(self.frame.state.duration);
-    duration.innerHTML = formatDuration(dur);
-
-    // update volume handle range
-    self.vol.range.x[1] = float(getComputedStyle(volumeSlider).width);
-
-    update();
-    self.ready = true;
-    self.emit('ready');
-  });
-
-  this.frame.on('progress', function (e) {
-    var x = 0;
-
-    // update progress bar
-    raf(function () {
-      loaded.style.width = e.percent + '%';
-    });
-
-    // new scrub range
-    x = loaded.offsetWidth;
-
-    // update scrub range
-    self.scrub.range.x[1] = x;
-  });
-
-  this.frame.on('timeupdate', function (e) {
-    var replay = self.el.querySelector('.playpause .replay');
-
-    // update played progress bar
-    raf(function () {
-      played.style.width = e.percent + '%';
-    });
-
-    replay.classList.add('hidden');
-    update();
-  });
-
-  this.frame.on('end', function () {
-    var play = self.el.querySelector('.playpause .play');
-    var pause = self.el.querySelector('.playpause .pause');
-    var replay = self.el.querySelector('.playpause .replay');
-
-    play.classList.add('hidden');
-    pause.classList.add('hidden');
-    replay.classList.remove('hidden');
-
-    self.paused = true;
-  });
-
-  self.frame.on('play', function () {
-    self.paused = false;
-  });
-
-  self.frame.on('pause', function () {
-    self.paused = true;
-  });
-
-  function update () {
-    var dur = parseDuration(self.frame.state.time);
-    var x = 0;
-
-    // update current time
-    current.innerHTML = formatDuration(dur);
-
-    // get current x position for scrubber
-    x = played.offsetWidth - 2; //
-
-    if (false == self.scrubbing) {
-      // update scrub position
-      self.scrub.setPosition(x, 0);
-    }
-
-    var v = (
-      float(getComputedStyle(volumeSlider).width) * self.frame.video.volume
-    );
-
-    raf(function () {
-      self.vol.setPosition(v, 0);
-      volumeLevel.style.width = v +'px';
-    });
-  }
-}
-
-// inherit from emitter
-emitter(Controls.prototype);
-
-/**
- * `onclick' event handler
- *
- * @api private
- * @param {Event} e
- */
-
-Controls.prototype.onclick = function (e) {
-  e.preventDefault();
-  this.scrubbing = false;
-};
-
-
-/**
- * `onplayclick' event handler. Handles toggling play
- * and pause buttons
- *
- * @api private
- * @param {Event} e
- */
-
-Controls.prototype.onplayclick = function (e) {
-  var play = this.el.querySelector('.play');
-  var replay = this.el.querySelector('.replay');
-  var paused = Boolean(this.frame.video.paused);
-
-  e.preventDefault();
-
-  this.toggle();
-  this.paused = Boolean(this.frame.video.paused);
-
-  if (e.target == replay) {
-    this.emit('replay');
-  }
-};
-
-/**
- * `onmuteclick' event handler
- *
- * @api private
- * @param {Event} e
- */
-
-Controls.prototype.onmuteclick = function (e) {
-  var el = this.el.querySelector('.volume .control');
-  if (this.muted) {
-    el.classList.remove('muted');
-    this.muted = false;
-  } else {
-    el.classList.add('muted');
-    this.muted = true;
-  }
-};
-
-/**
- * `onvolumefocus' event handler
- *
- * @api private
- * @param {Event} e
- */
-
-Controls.prototype.onvolumefocus = function (e) {
-};
-
-/**
- * `onvolumeblur' event handler
- *
- * @api private
- * @param {Event} e
- */
-
-Controls.prototype.onvolumeblur = function (e) {
-};
-
-/**
- * `onvolumeclick' event handler
- *
- * @api private
- * @param {Event} e
- */
-
-Controls.prototype.onvolumeclick = function (e) {
-  var panel = this.el.querySelector('.volume .panel');
-  var style = getComputedStyle(panel, null);
-  var x = e.offsetX;
-  var w = float(style.width);
-  var v = x / w;
-
-  if (panel.querySelector('.handle') == e.target) {
-    return false;
-  }
-
-  this.volume(v);
-};
-
-/**
- * `onscrubclick' event handler
- *
- * @api private
- * @param {Event} e
- */
-
-Controls.prototype.onscrubclick = function (e) {
-  var x = e.offsetX;
-  var w = float(getComputedStyle(e.target.parentElement, null).width);
-  var d = this.frame.video.duration;
-  var p = x / w;
-  var s = d * p;
-
-  this.scrubbing = false;
-  this.seek(s);
-  if (true == this.paused) {
-    this.play();
-  }
-  this.emit('scrubend', e);
-};
-
-/**
- * Plays the frame. Usually called from
- * the `onplayclick' event handler
- *
- * @api public
- * @param {Boolean} toggle
- */
-
-Controls.prototype.play = function (toggle) {
-  this.el.querySelector('.play').classList.add('hidden');
-  this.el.querySelector('.replay').classList.add('hidden');
-  this.el.querySelector('.pause').classList.remove('hidden');
-  if (true != toggle) {
-    this.frame.play();
-    this.emit('play');
-  }
-  return this;
-};
-
-/**
- * Pausesthe frame. Usually called from
- * the `onplayclick' event handler
- *
- * @api public
- * @param {Boolean} toggle
- */
-Controls.prototype.pause = function (toggle) {
-  this.el.querySelector('.pause').classList.add('hidden');
-  this.el.querySelector('.play').classList.remove('hidden');
-  if (true != toggle) {
-    this.frame.pause();
-    this.emit('pause');
-  }
-  return this;
-};
-
-/**
- * Toggles control playback
- *
- * @api public
- */
-
-Controls.prototype.toggle = function (toggle) {
-  return (
-    this.frame.video.paused ?
-    this.play(toggle) : this.pause(toggle)
-  );
-};
-
-/**
- * Show frame controls
- *
- * @api public
- */
-
-Controls.prototype.show = function () {
-  this.el.style.display = 'block';
-  return this;
-};
-
-/*
- * Hide frame controls
- *
- * @api public
- */
-
-Controls.prototype.hide = function () {
-  this.el.style.display = 'none';
-  return this;
-};
-
-/**
- * Set volume for video frame
- *
- * @api public
- * @param {Number} vol
- */
-
-Controls.prototype.volume = function (vol) {
-  this.frame.volume(vol);
-  return this;
-};
-
-/**
- * Mute video frame
- *
- * @api public
- */
-
-Controls.prototype.mute = function () {
-  this.frame.mute();
-  this.emit('mute');
-  return this;
-};
-
-/**
- * Unmute video frame
- *
- * @api public
- */
-
-Controls.prototype.unmute = function () {
-  this.frame.unmute();
-  this.emit('unmute');
-  return this;
-};
-
-/**
- * Seek frame in seconds
- *
- * @api public
- * @param {Number} seconds
- */
-
-Controls.prototype.seek = function (seconds) {
-  this.emit('beforeseek', seconds);
-  this.frame.seek(seconds);
-  if (false == this.paused) {
-    this.play();
-  }
-  this.emit('seek', seconds);
-  return this;
-};
-
-/**
- * Fast forward frame in seconds
- *
- * @api public
- * @param {Number} seconds
- */
-
-Controls.prototype.forward = function (seconds) {
-  this.frame.forward(seconds);
-  return this;
-};
-
-/**
- * Rewind frame in seconds
- *
- * @api public
- * @param {Number} seconds
- */
-
-Controls.prototype.rewind = function (seconds) {
-  this.frame.rewind(seconds);
-  return this;
-};
-
-/**
- * Installs plugin
- *
- * @api public
- * @param {Function} fn
- */
-
-Controls.prototype.use = function (fn) {
-  if (this.ready) {
-    fn(this);
-  } else {
-    this.on('ready', function () {
-      fn(this);
-    });
-  }
-  return this;
-};
-
-/**
- * Show controls
- *
- * @api public
- */
-
-Controls.prototype.show = function () {
-  var self = this;
-  raf(function () {
-    self.el.classList.remove('hidden');
-    self.el.classList.add('fadeIn');
-    self.el.classList.remove('fadeOut');
-    self.emit('show');
-  });
-  return this;
-};
-
-/**
- * Hide controls
- *
- * @api public
- */
-
-Controls.prototype.hide = function () {
-  var self = this;
-  raf(function () {
-    self.el.classList.remove('fadeIn');
-    self.el.classList.add('fadeOut');
-
-    // defer hiding visiblity for animations
-    setTimeout(function () {
-      self.el.classList.add('hidden');
-      self.emit('hide');
-    });
-  });
-  return this;
-};
-
-});
-
-require.define("littlstar~slant-controls@0.1.3/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n      <a href=\"#\" class=\"replay fadeIn hidden\">&#10227;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <!--span class=\"control\">vol</span-->\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
 
 require.register("components~three.js@0.0.69", function (exports, module) {
 // File:src/Three.js
@@ -37153,6 +35513,44 @@ THREE.MorphBlendMesh.prototype.update = function ( delta ) {
 
 });
 
+require.register("component~raf@1.2.0", function (exports, module) {
+/**
+ * Expose `requestAnimationFrame()`.
+ */
+
+exports = module.exports = window.requestAnimationFrame
+  || window.webkitRequestAnimationFrame
+  || window.mozRequestAnimationFrame
+  || fallback;
+
+/**
+ * Fallback implementation.
+ */
+
+var prev = new Date().getTime();
+function fallback(fn) {
+  var curr = new Date().getTime();
+  var ms = Math.max(0, 16 - (curr - prev));
+  var req = setTimeout(fn, ms);
+  prev = curr;
+  return req;
+}
+
+/**
+ * Cancel.
+ */
+
+var cancel = window.cancelAnimationFrame
+  || window.webkitCancelAnimationFrame
+  || window.mozCancelAnimationFrame
+  || window.clearTimeout;
+
+exports.cancel = function(id){
+  cancel.call(window, id);
+};
+
+});
+
 require.register("jb55~has-webgl@v0.0.1", function (exports, module) {
 /**
  * @author alteredq / http://alteredqualia.com/
@@ -37891,6 +36289,1608 @@ Frame.prototype.width = function (width) {
 });
 
 require.define("littlstar~slant-frame@0.1.3/template.html", "<section class=\"slant frame\">\n  <div class=\"slant container\">\n    <video class=\"slant\"></video>\n  </div>\n</section>\n");
+
+require.register("mnmly~css-matrix@component-js", function (exports, module) {
+
+// a CSSMatrix shim
+// http://www.w3.org/TR/css3-3d-transforms/#cssmatrix-interface
+// http://www.w3.org/TR/css3-2d-transforms/#cssmatrix-interface
+
+/**
+ * CSSMatrix Shim
+ * @constructor
+ */
+var CSSMatrix = module.exports = function(){
+	var a = [].slice.call(arguments);
+	if (a.length) for (var i = a.length; i--;){
+		if (Math.abs(a[i]) < CSSMatrix.SMALL_NUMBER) a[i] = 0;
+	}
+	this.setIdentity();
+	if (a.length == 16){
+		this.m11 = a[0];  this.m12 = a[1];  this.m13 = a[2];  this.m14 = a[3];
+		this.m21 = a[4];  this.m22 = a[5];  this.m23 = a[6];  this.m24 = a[7];
+		this.m31 = a[8];  this.m32 = a[9];  this.m33 = a[10]; this.m34 = a[11];
+		this.m41 = a[12]; this.m42 = a[13]; this.m43 = a[14]; this.m44 = a[15];
+	} else if (a.length == 6) {
+		this.affine = true;
+		this.m11 = this.a = a[0]; this.m12 = this.b = a[1]; this.m14 = this.e = a[4];
+		this.m21 = this.c = a[2]; this.m22 = this.d = a[3]; this.m24 = this.f = a[5];
+	}
+};
+
+CSSMatrix.SMALL_NUMBER = 1e-8;
+
+// Transformations
+
+// http://en.wikipedia.org/wiki/Rotation_matrix
+
+CSSMatrix.Rotate = function(rx, ry, rz){
+	rx *= Math.PI / 180;
+	ry *= Math.PI / 180;
+	rz *= Math.PI / 180;
+	// minus sin() because of right-handed system
+	var cosx = Math.cos(rx), sinx = - Math.sin(rx);
+	var cosy = Math.cos(ry), siny = - Math.sin(ry);
+	var cosz = Math.cos(rz), sinz = - Math.sin(rz);
+	var m = new CSSMatrix();
+
+	m.m11 = cosy * cosz;
+	m.m12 = - cosx * sinz + sinx * siny * cosz;
+	m.m13 = sinx * sinz + cosx * siny * cosz;
+
+	m.m21 = cosy * sinz;
+	m.m22 = cosx * cosz + sinx * siny * sinz;
+	m.m23 = - sinx * cosz + cosx * siny * sinz;
+
+	m.m31 = - siny;
+	m.m32 = sinx * cosy;
+	m.m33 = cosx * cosy;
+
+	return m;
+};
+
+CSSMatrix.RotateAxisAngle = function(x, y, z, angle){
+	angle *= Math.PI / 180;
+	var m = new CSSMatrix(), cos = Math.cos(angle), sin = Math.sin(angle);
+	var cos1 = 1 - cos;
+
+	m.m11 = cos + x * x * cos1;
+	m.m12 = x * y * cos1 - z * sin;
+	m.m13 = x * z * cos1 - y * sin;
+
+	m.m21 = y * x * cos1 + z * sin;
+	m.m22 = cos * y * y * cos1;
+	m.m21 = y * z * cos1 - x * sin;
+
+	m.m31 = z * x * cos1 - y * sin;
+	m.m32 = z * y * cos1 + x * sin;
+	m.m33 = cos + z * z * cos1;
+
+	return m;
+};
+
+CSSMatrix.ScaleX = function(x){
+	var m = new CSSMatrix();
+	m.m11 = x;
+	return m;
+};
+
+CSSMatrix.ScaleY = function(y){
+	var m = new CSSMatrix();
+	m.m22 = y;
+	return m;
+};
+
+CSSMatrix.ScaleZ = function(z){
+	var m = new CSSMatrix();
+	m.m33 = z;
+	return m;
+};
+
+CSSMatrix.Scale = function(x, y, z){
+	var m = new CSSMatrix();
+	m.m11 = x;
+	m.m22 = y;
+	m.m33 = z;
+	return m;
+};
+
+CSSMatrix.SkewX = function(angle){
+	angle *= Math.PI / 180;
+	var m = new CSSMatrix();
+	m.m21 = Math.tan(angle);
+	return m;
+};
+
+CSSMatrix.SkewY = function(angle){
+	angle *= Math.PI / 180;
+	var m = new CSSMatrix();
+	m.m12 = Math.tan(angle);
+	return m;
+};
+
+CSSMatrix.Translate = function(x, y, z){
+	var m = new CSSMatrix();
+	m.m14 = x;
+	m.m24 = y;
+	m.m34 = z;
+	return m;
+};
+
+CSSMatrix.multiply = function(m1, m2){
+
+	var m11 = m1.m11 * m2.m11 + m1.m12 * m2.m21 + m1.m13 * m2.m31 + m1.m14 * m2.m41,
+		m12 = m1.m11 * m2.m12 + m1.m12 * m2.m22 + m1.m13 * m2.m32 + m1.m14 * m2.m42,
+		m13 = m1.m11 * m2.m13 + m1.m12 * m2.m23 + m1.m13 * m2.m33 + m1.m14 * m2.m43,
+		m14 = m1.m11 * m2.m14 + m1.m12 * m2.m24 + m1.m13 * m2.m34 + m1.m14 * m2.m44,
+
+		m21 = m1.m21 * m2.m11 + m1.m22 * m2.m21 + m1.m23 * m2.m31 + m1.m24 * m2.m41,
+		m22 = m1.m21 * m2.m12 + m1.m22 * m2.m22 + m1.m23 * m2.m32 + m1.m24 * m2.m42,
+		m23 = m1.m21 * m2.m13 + m1.m22 * m2.m23 + m1.m23 * m2.m33 + m1.m24 * m2.m43,
+		m24 = m1.m21 * m2.m14 + m1.m22 * m2.m24 + m1.m23 * m2.m34 + m1.m24 * m2.m44,
+
+		m31 = m1.m31 * m2.m11 + m1.m32 * m2.m21 + m1.m33 * m2.m31 + m1.m34 * m2.m41,
+		m32 = m1.m31 * m2.m12 + m1.m32 * m2.m22 + m1.m33 * m2.m32 + m1.m34 * m2.m42,
+		m33 = m1.m31 * m2.m13 + m1.m32 * m2.m23 + m1.m33 * m2.m33 + m1.m34 * m2.m43,
+		m34 = m1.m31 * m2.m14 + m1.m32 * m2.m24 + m1.m33 * m2.m34 + m1.m34 * m2.m44,
+
+		m41 = m1.m41 * m2.m11 + m1.m42 * m2.m21 + m1.m43 * m2.m31 + m1.m44 * m2.m41,
+		m42 = m1.m41 * m2.m12 + m1.m42 * m2.m22 + m1.m43 * m2.m32 + m1.m44 * m2.m42,
+		m43 = m1.m41 * m2.m13 + m1.m42 * m2.m23 + m1.m43 * m2.m33 + m1.m44 * m2.m43,
+		m44 = m1.m41 * m2.m14 + m1.m42 * m2.m24 + m1.m43 * m2.m34 + m1.m44 * m2.m44;
+
+	return new CSSMatrix(
+		m11, m12, m13, m14,
+		m21, m22, m23, m24,
+		m31, m32, m33, m34,
+		m41, m42, m43, m44
+	);
+};
+
+// w3c defined methods
+
+/**
+ * The setMatrixValue method replaces the existing matrix with one computed
+ * from parsing the passed string as though it had been assigned to the
+ * transform property in a CSS style rule.
+ * @param {String} string The string to parse.
+ */
+CSSMatrix.prototype.setMatrixValue = function(string){
+	string = String(string).trim();
+	var m = this;
+	m.setIdentity();
+	if (string == 'none') return m;
+	var type = string.slice(0, string.indexOf('(')), parts, i;
+	if (type == 'matrix3d'){
+		parts = string.slice(9, -1).split(',');
+		for (i = parts.length; i--;) parts[i] = parseFloat(parts[i]);
+		m.m11 = parts[0]; m.m12 = parts[4]; m.m13 = parts[8];  m.m14 = parts[12];
+		m.m21 = parts[1]; m.m22 = parts[5]; m.m23 = parts[9];  m.m24 = parts[13];
+		m.m31 = parts[2]; m.m32 = parts[6]; m.m33 = parts[10]; m.m34 = parts[14];
+		m.m41 = parts[3]; m.m42 = parts[7]; m.m43 = parts[11]; m.m44 = parts[15];
+	} else if (type == 'matrix'){
+		m.affine = true;
+		parts = string.slice(7, -1).split(',');
+		for (i = parts.length; i--;) parts[i] = parseFloat(parts[i]);
+		m.m11 = m.a = parts[0]; m.m12 = m.b = parts[2]; m.m14 = m.e = parts[4];
+		m.m21 = m.c = parts[1]; m.m22 = m.d = parts[3]; m.m24 = m.f = parts[5];
+	} else {
+		throw new TypeError('Invalid Matrix Value');
+	}
+	return m;
+};
+
+/**
+ * The multiply method returns a new CSSMatrix which is the result of this
+ * matrix multiplied by the passed matrix, with the passed matrix to the right.
+ * This matrix is not modified.
+ *
+ * @param {CSSMatrix} m2
+ * @return {CSSMatrix} The result matrix.
+ */
+CSSMatrix.prototype.multiply = function(m2){
+	return CSSMatrix.multiply(this, m2);
+};
+
+/**
+ * The inverse method returns a new matrix which is the inverse of this matrix.
+ * This matrix is not modified.
+ *
+ * method not implemented yet
+ */
+CSSMatrix.prototype.inverse = function(){
+	throw new Error('the inverse() method is not implemented (yet).');
+};
+
+/**
+ * The translate method returns a new matrix which is this matrix post
+ * multiplied by a translation matrix containing the passed values. If the z
+ * component is undefined, a 0 value is used in its place. This matrix is not
+ * modified.
+ *
+ * @param {number} x X component of the translation value.
+ * @param {number} y Y component of the translation value.
+ * @param {number=} z Z component of the translation value.
+ * @return {CSSMatrix} The result matrix
+ */
+CSSMatrix.prototype.translate = function(x, y, z){
+	if (z == null) z = 0;
+	return CSSMatrix.multiply(this, new CSSMatrix.Translate(x, y, z));
+};
+
+/**
+ * The scale method returns a new matrix which is this matrix post multiplied by
+ * a scale matrix containing the passed values. If the z component is undefined,
+ * a 1 value is used in its place. If the y component is undefined, the x
+ * component value is used in its place. This matrix is not modified.
+ *
+ * @param {number} x The X component of the scale value.
+ * @param {number=} y The Y component of the scale value.
+ * @param {number=} z The Z component of the scale value.
+ * @return {CSSMatrix} The result matrix
+ */
+CSSMatrix.prototype.scale = function(x, y, z){
+	if (y == null) y = x;
+	if (z == null) z = 1;
+	return CSSMatrix.multiply(this, new CSSMatrix.Scale(x, y, z));
+};
+
+/**
+ * The rotate method returns a new matrix which is this matrix post multiplied
+ * by each of 3 rotation matrices about the major axes, first X, then Y, then Z.
+ * If the y and z components are undefined, the x value is used to rotate the
+ * object about the z axis, as though the vector (0,0,x) were passed. All
+ * rotation values are in degrees. This matrix is not modified.
+ *
+ * @param {number} rx The X component of the rotation value, or the Z component if the rotY and rotZ parameters are undefined.
+ * @param {number=} ry The (optional) Y component of the rotation value.
+ * @param {number=} rz The (optional) Z component of the rotation value.
+ * @return {CSSMatrix} The result matrix
+ */
+CSSMatrix.prototype.rotate = function(rx, ry, rz){
+	if (ry == null) ry = rx;
+	if (rz == null) rz = rx;
+	return CSSMatrix.multiply(this, new CSSMatrix.Rotate(rx, ry, rz));
+};
+
+/**
+ * The rotateAxisAngle method returns a new matrix which is this matrix post
+ * multiplied by a rotation matrix with the given axis and angle. The right-hand
+ * rule is used to determine the direction of rotation. All rotation values are
+ * in degrees. This matrix is not modified.
+ *
+ * @param {number} x The X component of the axis vector.
+ * @param {number=} y The Y component of the axis vector.
+ * @param {number=} z The Z component of the axis vector.
+ * @param {number} angle The angle of rotation about the axis vector, in degrees.
+ * @return {CSSMatrix} The result matrix
+ */
+CSSMatrix.prototype.rotateAxisAngle = function(x, y, z, angle){
+	if (y == null) y = x;
+	if (z == null) z = x;
+	return CSSMatrix.multiply(this, new CSSMatrix.RotateAxisAngle(x, y, z, angle));
+};
+
+// Defined in WebKitCSSMatrix, but not in the w3c draft
+
+/**
+ * Specifies a skew transformation along the x-axis by the given angle.
+ *
+ * @param {number} angle The angle amount in degrees to skew.
+ * @return {CSSMatrix} The result matrix
+ */
+CSSMatrix.prototype.skewX = function(angle){
+	return CSSMatrix.multiply(this, new CSSMatrix.SkewX(angle));
+};
+
+/**
+ * Specifies a skew transformation along the x-axis by the given angle.
+ *
+ * @param {number} angle The angle amount in degrees to skew.
+ * @return {CSSMatrix} The result matrix
+ */
+CSSMatrix.prototype.skewY = function(angle){
+	return CSSMatrix.multiply(this, new CSSMatrix.SkewY(angle));
+};
+
+/**
+ * Returns a string representation of the matrix.
+ * @return {string}
+ */
+CSSMatrix.prototype.toString = function(){
+	var m = this;
+	if (this.affine){
+		return  'matrix(' + [
+			m.m11, m.m12,
+			m.m21, m.m22,
+			m.m14, m.m24
+		].join(', ') + ')';
+	}
+	// note: the elements here are transposed
+	return  'matrix3d(' + [
+		m.m11, m.m21, m.m31, m.m41,
+		m.m12, m.m22, m.m32, m.m42,
+		m.m13, m.m23, m.m33, m.m43,
+		m.m14, m.m24, m.m34, m.m44
+	].join(', ') + ')';
+};
+
+// Additional methods
+
+/**
+ * Set the current matrix to the identity form
+ *
+ * @return {CSSMatrix} this matrix
+ */
+CSSMatrix.prototype.setIdentity = function(){
+	var m = this;
+	m.m11 = 1; m.m12 = 0; m.m13 = 0; m.m14 = 0;
+	m.m21 = 0; m.m22 = 1; m.m23 = 0; m.m24 = 0;
+	m.m31 = 0; m.m32 = 0; m.m33 = 1; m.m34 = 0;
+	m.m41 = 0; m.m42 = 0; m.m43 = 0; m.m44 = 1;
+	return this;
+};
+
+/**
+ * Transform a tuple (3d point) with this CSSMatrix
+ *
+ * @param {Tuple} an object with x, y, z and w properties
+ * @return {Tuple} the passed tuple
+ */
+CSSMatrix.prototype.transform = function(t /* tuple */ ){
+	var m = this;
+
+	var x = m.m11 * t.x + m.m12 * t.y + m.m13 * t.z + m.m14 * t.w,
+		y = m.m21 * t.x + m.m22 * t.y + m.m23 * t.z + m.m24 * t.w,
+		z = m.m31 * t.x + m.m32 * t.y + m.m33 * t.z + m.m34 * t.w,
+		w = m.m41 * t.x + m.m42 * t.y + m.m43 * t.z + m.m44 * t.w;
+
+	t.x = x / w;
+	t.y = y / w;
+	t.z = z / w;
+
+	return t;
+};
+
+CSSMatrix.prototype.toFullString = function(){
+	var m = this;
+	return [
+		[m.m11, m.m12, m.m13, m.m14].join(', '),
+		[m.m21, m.m22, m.m23, m.m24].join(', '),
+		[m.m31, m.m32, m.m33, m.m34].join(', '),
+		[m.m41, m.m42, m.m43, m.m44].join(', ')
+	].join('\n');
+};
+
+});
+
+require.register("component~indexof@0.0.3", function (exports, module) {
+module.exports = function(arr, obj){
+  if (arr.indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+});
+
+require.register("component~classes@1.2.1", function (exports, module) {
+/**
+ * Module dependencies.
+ */
+
+var index = require('component~indexof@0.0.3');
+
+/**
+ * Whitespace regexp.
+ */
+
+var re = /\s+/;
+
+/**
+ * toString reference.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Wrap `el` in a `ClassList`.
+ *
+ * @param {Element} el
+ * @return {ClassList}
+ * @api public
+ */
+
+module.exports = function(el){
+  return new ClassList(el);
+};
+
+/**
+ * Initialize a new ClassList for `el`.
+ *
+ * @param {Element} el
+ * @api private
+ */
+
+function ClassList(el) {
+  if (!el) throw new Error('A DOM element reference is required');
+  this.el = el;
+  this.list = el.classList;
+}
+
+/**
+ * Add class `name` if not already present.
+ *
+ * @param {String} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.add = function(name){
+  // classList
+  if (this.list) {
+    this.list.add(name);
+    return this;
+  }
+
+  // fallback
+  var arr = this.array();
+  var i = index(arr, name);
+  if (!~i) arr.push(name);
+  this.el.className = arr.join(' ');
+  return this;
+};
+
+/**
+ * Remove class `name` when present, or
+ * pass a regular expression to remove
+ * any which match.
+ *
+ * @param {String|RegExp} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.remove = function(name){
+  if ('[object RegExp]' == toString.call(name)) {
+    return this.removeMatching(name);
+  }
+
+  // classList
+  if (this.list) {
+    this.list.remove(name);
+    return this;
+  }
+
+  // fallback
+  var arr = this.array();
+  var i = index(arr, name);
+  if (~i) arr.splice(i, 1);
+  this.el.className = arr.join(' ');
+  return this;
+};
+
+/**
+ * Remove all classes matching `re`.
+ *
+ * @param {RegExp} re
+ * @return {ClassList}
+ * @api private
+ */
+
+ClassList.prototype.removeMatching = function(re){
+  var arr = this.array();
+  for (var i = 0; i < arr.length; i++) {
+    if (re.test(arr[i])) {
+      this.remove(arr[i]);
+    }
+  }
+  return this;
+};
+
+/**
+ * Toggle class `name`, can force state via `force`.
+ *
+ * For browsers that support classList, but do not support `force` yet,
+ * the mistake will be detected and corrected.
+ *
+ * @param {String} name
+ * @param {Boolean} force
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.toggle = function(name, force){
+  // classList
+  if (this.list) {
+    if ("undefined" !== typeof force) {
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
+      }
+    } else {
+      this.list.toggle(name);
+    }
+    return this;
+  }
+
+  // fallback
+  if ("undefined" !== typeof force) {
+    if (!force) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
+  } else {
+    if (this.has(name)) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return an array of classes.
+ *
+ * @return {Array}
+ * @api public
+ */
+
+ClassList.prototype.array = function(){
+  var str = this.el.className.replace(/^\s+|\s+$/g, '');
+  var arr = str.split(re);
+  if ('' === arr[0]) arr.shift();
+  return arr;
+};
+
+/**
+ * Check if class `name` is present.
+ *
+ * @param {String} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.has =
+ClassList.prototype.contains = function(name){
+  return this.list
+    ? this.list.contains(name)
+    : !! ~index(this.array(), name);
+};
+
+});
+
+require.register("component~classes@1.2.2", function (exports, module) {
+/**
+ * Module dependencies.
+ */
+
+var index = require('component~indexof@0.0.3');
+
+/**
+ * Whitespace regexp.
+ */
+
+var re = /\s+/;
+
+/**
+ * toString reference.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Wrap `el` in a `ClassList`.
+ *
+ * @param {Element} el
+ * @return {ClassList}
+ * @api public
+ */
+
+module.exports = function(el){
+  return new ClassList(el);
+};
+
+/**
+ * Initialize a new ClassList for `el`.
+ *
+ * @param {Element} el
+ * @api private
+ */
+
+function ClassList(el) {
+  if (!el) throw new Error('A DOM element reference is required');
+  this.el = el;
+  this.list = el.classList;
+}
+
+/**
+ * Add class `name` if not already present.
+ *
+ * @param {String} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.add = function(name){
+  // classList
+  if (this.list) {
+    this.list.add(name);
+    return this;
+  }
+
+  // fallback
+  var arr = this.array();
+  var i = index(arr, name);
+  if (!~i) arr.push(name);
+  this.el.className = arr.join(' ');
+  return this;
+};
+
+/**
+ * Remove class `name` when present, or
+ * pass a regular expression to remove
+ * any which match.
+ *
+ * @param {String|RegExp} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.remove = function(name){
+  if ('[object RegExp]' == toString.call(name)) {
+    return this.removeMatching(name);
+  }
+
+  // classList
+  if (this.list) {
+    this.list.remove(name);
+    return this;
+  }
+
+  // fallback
+  var arr = this.array();
+  var i = index(arr, name);
+  if (~i) arr.splice(i, 1);
+  this.el.className = arr.join(' ');
+  return this;
+};
+
+/**
+ * Remove all classes matching `re`.
+ *
+ * @param {RegExp} re
+ * @return {ClassList}
+ * @api private
+ */
+
+ClassList.prototype.removeMatching = function(re){
+  var arr = this.array();
+  for (var i = 0; i < arr.length; i++) {
+    if (re.test(arr[i])) {
+      this.remove(arr[i]);
+    }
+  }
+  return this;
+};
+
+/**
+ * Toggle class `name`, can force state via `force`.
+ *
+ * For browsers that support classList, but do not support `force` yet,
+ * the mistake will be detected and corrected.
+ *
+ * @param {String} name
+ * @param {Boolean} force
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.toggle = function(name, force){
+  // classList
+  if (this.list) {
+    if ("undefined" !== typeof force) {
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
+      }
+    } else {
+      this.list.toggle(name);
+    }
+    return this;
+  }
+
+  // fallback
+  if ("undefined" !== typeof force) {
+    if (!force) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
+  } else {
+    if (this.has(name)) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return an array of classes.
+ *
+ * @return {Array}
+ * @api public
+ */
+
+ClassList.prototype.array = function(){
+  var str = this.el.className.replace(/^\s+|\s+$/g, '');
+  var arr = str.split(re);
+  if ('' === arr[0]) arr.shift();
+  return arr;
+};
+
+/**
+ * Check if class `name` is present.
+ *
+ * @param {String} name
+ * @return {ClassList}
+ * @api public
+ */
+
+ClassList.prototype.has =
+ClassList.prototype.contains = function(name){
+  return this.list
+    ? this.list.contains(name)
+    : !! ~index(this.array(), name);
+};
+
+});
+
+require.register("mnmly~constrain@master", function (exports, module) {
+/**
+ * Expose `constrain`
+ */
+
+module.exports = constrain;
+
+/**
+  * Constrains a value to not exceed a maximum and minimum value.
+  *
+  * @param {int|float} value   the value to constrain
+  * @param {int|float} value   minimum limit
+  * @param {int|float} value   maximum limit
+  *
+  * @returns {int|float}
+  */
+
+function constrain( aNumber, aMin, aMax ) {
+  return aNumber > aMax ? aMax : aNumber < aMin ? aMin : aNumber;
+};
+
+});
+
+require.register("mnmly~drag@master", function (exports, module) {
+/**
+ * Module dependencies
+ */
+
+var events    = require('component~events@1.0.9'),
+    classes   = require('component~classes@1.2.2'),
+    constrain = require('mnmly~constrain@master'),
+    CSSMatrix = require('mnmly~css-matrix@component-js'),
+    Emitter   = require('component~emitter@1.1.3');
+
+/**
+ * Export `Drag`
+ */
+
+module.exports = Drag;
+
+/**
+ * Firefox flag
+ */
+
+var isFF = navigator.userAgent.search('Firefox') > -1;
+
+/**
+ * Turn `el` into draggable element.
+ *
+ * Emits:
+ *
+ *   - `dragstart` when drag starts
+ *   - `drag` when dragging
+ *   - `dragend` when drag finishes
+ *
+ * Options:
+ *   - `smooth` enables `translate3d` positioning
+ *   - `axis` constrains drag direction ['x'|'y']
+ *   - `range` constrains range of movement
+ *
+ * @param {Element} el
+ * @param {Object} options optionally set `smooth` and `axis`
+ * @api public
+ */
+
+function Drag( el, options ){
+  if ( !( this instanceof Drag ) ) return new Drag( el, options );
+  if ( !el ) throw new TypeError( 'Drag() requires an element' );
+  options = options || { };
+  Emitter.call( this );
+  this.el     = el;
+  this.smooth = options.smooth || false;
+  this.axis   = options.axis || '';
+  this.range  = options.range || { x: null, y: null };
+  this.bind();
+}
+
+/**
+ * Inherit `Emitter`
+ */
+
+Drag.prototype.__proto__ = Emitter.prototype;
+
+/**
+ * Bind event handlers
+ *
+ * @api public
+ */
+
+Drag.prototype.bind = function() {
+  this.events = events( this.el, this );
+  this.docEvents = events( document, this );
+  this.events.bind( 'touchstart' );
+  this.events.bind( 'mousedown', 'ontouchstart' );
+};
+
+/**
+ * Unbind event handlers
+ *
+ * @api public
+ */
+
+Drag.prototype.unbind = function() {
+  this.events.unbind();
+};
+
+/**
+ * Handle touchstart
+ *
+ * We capture the location of the element and mouse,
+ * also binds `touchmove`, `touchend` events to `document`.
+ *
+ * @api private
+ */
+
+Drag.prototype.ontouchstart = function( e ) {
+  e.stopPropagation();
+  if ( e.touches ) e = e.touches[0];
+  classes( this.el ).add( 'is-dragging' );
+  this.originX = this.el.offsetLeft;
+  this.originY = this.el.offsetTop;
+  this.startX  = e.pageX;
+  this.startY  = e.pageY;
+  if( this.smooth ){
+    var translate   = this.getTranslate();
+    this.translateX = translate.x;
+    this.translateY = translate.y;
+  }
+  this.docEvents.bind( 'touchmove' );
+  this.docEvents.bind( 'mousemove', 'ontouchmove' );
+  this.docEvents.bind( 'touchend' );
+  this.docEvents.bind( 'mouseup', 'ontouchend' );
+  this.emit( 'dragstart' , e );
+};
+
+/**
+ * Handle touchmove
+ *
+ * Move element.
+ *
+ * @api private
+ */
+
+Drag.prototype.ontouchmove = function( e ) {
+  e.stopPropagation();
+  e.preventDefault();
+  var x = this.originX + ( e.pageX - this.startX ),
+      y = this.originY + ( e.pageY - this.startY );
+  if( this.smooth ){
+
+    x -= this.originX - this.translateX;
+    y -= this.originY - this.translateY;
+
+    var constrained = this.constrain( x, y );
+    this.x = constrained.x;
+    this.y = constrained.y;
+
+    this.setPosition( this.x, this.y );
+  } else {
+    var constrained = this.constrain( x, y );
+    this.x = constrained.x
+    this.y = constrained.y;
+    this.setPosition( this.x, this.y );
+
+  }
+  this.emit( 'drag', e );
+};
+
+/**
+ * Handle touchend
+ *
+ * Once drag finishes, unbinds all the events attached to `document`
+ *
+ * @api private
+ */
+
+Drag.prototype.ontouchend = function( e ) {
+  classes( this.el ).remove( 'is-dragging' );
+  this.docEvents.unbind();
+  this.emit( 'dragend', e );
+};
+
+/**
+ * Returns translate value
+ *
+ * @return {Object} x and y coordinate of `translate3d`
+ *
+ * @api private
+ */
+
+Drag.prototype.getTranslate = function( ) {
+  var x = 0, y = 0,
+      transform = getComputedStyle( this.el )[isFF ? 'transform' : 'webkitTransform'],
+      matrix, rawMatrix;
+  if( transform != 'none' ){
+    if( isFF ) {
+      rawMatrix = transform.replace(/[a-z\(\)(3d)]/g, '').split( ',' ).map( function(v){ return v * 1; } );
+      matrix = new CSSMatrix();
+      CSSMatrix.apply( matrix, rawMatrix );
+    } else {
+      matrix = new WebKitCSSMatrix( transform );
+    }
+    x = matrix.m41;
+    y = matrix.m42;
+  }
+  return { x: x, y: y };
+};
+
+
+/**
+ * Constrains `x`, `y`
+ *
+ * @param {Number} x
+ * @param {Number} y
+ *
+ * @api private
+ */
+
+Drag.prototype.constrain = function( x, y ) {
+  var x = this.range.x ? constrain( x, this.range.x[0], this.range.x[1] ) : x,
+      y = this.range.y ? constrain( y, this.range.y[0], this.range.y[1] ) : y;
+
+  if( this.axis === 'x' ) y = 0;
+  if( this.axis === 'y' ) x = 0;
+
+  return { x: x, y: y };
+};
+
+
+/**
+ * Explicitly sets position of the object
+ *
+ * @param {Number} x
+ * @param {Number} y
+ *
+ * @api public
+ */
+
+Drag.prototype.setPosition = function( x, y ) {
+  if ( this.smooth ) {
+    this.el.style.webkitTransform =
+       this.el.style.mozTransform =
+        this.el.style.msTransform =
+          this.el.style.transform = 'translate3d( ' + (x||0) + 'px, ' + (y||0) + 'px , 0.0001px )'; // need to force `matrix3d`
+
+  } else {
+    this.el.style.left = x + 'px';
+    this.el.style.top  = y + 'px';
+  }
+}
+
+
+});
+
+require.register("littlstar~slant-controls@0.1.3", function (exports, module) {
+
+/**
+ * Module dependencies
+ */
+
+var tpl = require('littlstar~slant-controls@0.1.3/template.html')
+  , dom = require('component~domify@1.3.1')
+  , events = require('component~events@1.0.9')
+  , emitter = require('component~emitter@1.1.3')
+  , drag = require('mnmly~drag@master')
+  , raf = require('component~raf@1.2.0')
+
+var int = parseInt;
+var float = parseFloat;
+
+function parseDuration (seconds) {
+  var h = int(seconds / (60 * 60));
+  var m = int(seconds / 60);
+  var s = int((m / 60) || seconds);
+  var ms = int(s * 1000);
+  return {
+    hours: h,
+    minutes: m,
+    seconds: s,
+    milliseconds: ms
+  };
+}
+
+function formatDuration (duration, format) {
+  var h = duration.hours;
+  var m = duration.minutes;
+  var s = duration.seconds;
+  var ms = duration.milliseconds;
+
+  format = format || 'm:s';
+
+  function pad (n) {
+    return String(n < 10 ? '0'+n : n);
+  }
+
+  h = pad(h);
+  m = pad(m);
+  s = pad(s);
+  ms = pad(ms);
+
+  return format.split(':').map(function (k) {
+    switch (k) {
+      case 'h': return h;
+      case 'm': return m;
+      case 's': return s;
+      case 'ms': return ms;
+      default: return null;
+    }
+  }).filter(Boolean).join(':');
+}
+
+/**
+ * `Controls' constructor
+ *
+ * @api public
+ * @param {Frame} frame
+ * @param {Object} opts
+ */
+
+module.exports = Controls
+function Controls (frame, opts) {
+  if (!(this instanceof Controls)) {
+    return new Controls(frame, opts);
+  }
+
+  opts = opts || {};
+
+  var self = this;
+
+  this.frame = frame.render();
+  this.el = dom(tpl);
+  this.scrubbing = false;
+  this.ready = false;
+  this.paused = true;
+  this.muted = frame.video.muted;
+  this.events = events(this.el, this);
+  this.events.bind('click', 'onclick');
+
+  // play/pause handles
+  this.events.bind('click .playpause .play', 'onplayclick');
+  this.events.bind('click .playpause .replay', 'onplayclick');
+  this.events.bind('click .playpause .pause', 'onplayclick');
+
+  // track scrubbing
+  this.events.bind('click .progress .played', 'onscrubclick');
+  this.events.bind('click .progress .loaded', 'onscrubclick');
+
+  // volume control
+  this.events.bind('click .volume .control', 'onmuteclick');
+  this.events.bind('mouseover .volume', 'onvolumefocus');
+  this.events.bind('mouseout .volume', 'onvolumeblur');
+  this.events.bind('click .volume .panel', 'onvolumeclick');
+
+  var progress = this.el.querySelector('.progress');
+  var played = progress.querySelector('.played');
+  var loaded = progress.querySelector('.loaded');
+  var scrub = progress.querySelector('.scrub');
+
+  var time = this.el.querySelector('.time');
+  var current = time.querySelector('.current');
+  var duration = time.querySelector('.duration');
+
+  var volume = this.el.querySelector('.volume');
+  var volumeControl = volume.querySelector('.control');
+  var volumePanel = volume.querySelector('.panel');
+  var volumeSlider = volume.querySelector('.slider');
+  var volumeHandle = volume.querySelector('.handle');
+  var volumeLevel = volume.querySelector('.level');
+
+  this.vol = drag(volumeHandle, {
+    smooth: true,
+    range: {x: [0, 100]},
+    axis: 'x'
+  });
+
+  this.scrub = drag(scrub, {
+    smooth: true,
+    range: {x: [0, 100]},
+    axis: 'x'
+  });
+
+  if (opts.separator) {
+    time.querySelector('.separator').innerHTML = opts.separator;
+  }
+
+  this.scrub.on('dragstart', function (e) {
+    self.scrubbing = true;
+    self.emit('scrubstart', e);
+  });
+
+  this.scrub.on('drag', function (e) {
+    self.scrubbing = true;
+    self.emit('scrub', e);
+  });
+
+  this.vol.on('drag', function (e) {
+    var x = self.vol.x;
+    var w = float(getComputedStyle(volumeSlider, null).width);
+    var p = x / w;
+    var v = w * self.frame.video.volume;
+
+    raf(function () {
+      volumeLevel.style.width = v +'px';
+    });
+
+    self.frame.volume(p);
+
+    self.emit('volume');
+  });
+
+  this.scrub.on('dragend', function (e) {
+    var x = self.scrub.x;
+    var w = float(getComputedStyle(scrub.parentElement, null).width);
+    var d = self.frame.video.duration;
+    var p = x / w;
+    var s = d * p;
+
+    self.scrubbing = false;
+    self.seek(s);
+    self.emit('scrubend', e);
+  });
+
+  this.frame.on('ready', function () {
+    var dur = null;
+
+    // format current time
+    dur = parseDuration(self.frame.state.time);
+    current.innerHTML = formatDuration(dur);
+
+    // format total duration
+    dur = parseDuration(self.frame.state.duration);
+    duration.innerHTML = formatDuration(dur);
+
+    // update volume handle range
+    self.vol.range.x[1] = float(getComputedStyle(volumeSlider).width);
+
+    update();
+    self.ready = true;
+    self.emit('ready');
+  });
+
+  this.frame.on('progress', function (e) {
+    var x = 0;
+
+    // update progress bar
+    raf(function () {
+      loaded.style.width = e.percent + '%';
+    });
+
+    // new scrub range
+    x = loaded.offsetWidth;
+
+    // update scrub range
+    self.scrub.range.x[1] = x;
+  });
+
+  this.frame.on('timeupdate', function (e) {
+    var replay = self.el.querySelector('.playpause .replay');
+
+    // update played progress bar
+    raf(function () {
+      played.style.width = e.percent + '%';
+    });
+
+    replay.classList.add('hidden');
+    update();
+  });
+
+  this.frame.on('end', function () {
+    var play = self.el.querySelector('.playpause .play');
+    var pause = self.el.querySelector('.playpause .pause');
+    var replay = self.el.querySelector('.playpause .replay');
+
+    play.classList.add('hidden');
+    pause.classList.add('hidden');
+    replay.classList.remove('hidden');
+
+    self.paused = true;
+  });
+
+  self.frame.on('play', function () {
+    self.paused = false;
+  });
+
+  self.frame.on('pause', function () {
+    self.paused = true;
+  });
+
+  function update () {
+    var dur = parseDuration(self.frame.state.time);
+    var x = 0;
+
+    // update current time
+    current.innerHTML = formatDuration(dur);
+
+    // get current x position for scrubber
+    x = played.offsetWidth - 2; //
+
+    if (false == self.scrubbing) {
+      // update scrub position
+      self.scrub.setPosition(x, 0);
+    }
+
+    var v = (
+      float(getComputedStyle(volumeSlider).width) * self.frame.video.volume
+    );
+
+    raf(function () {
+      self.vol.setPosition(v, 0);
+      volumeLevel.style.width = v +'px';
+    });
+  }
+}
+
+// inherit from emitter
+emitter(Controls.prototype);
+
+/**
+ * `onclick' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onclick = function (e) {
+  e.preventDefault();
+  this.scrubbing = false;
+};
+
+
+/**
+ * `onplayclick' event handler. Handles toggling play
+ * and pause buttons
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onplayclick = function (e) {
+  var play = this.el.querySelector('.play');
+  var replay = this.el.querySelector('.replay');
+  var paused = Boolean(this.frame.video.paused);
+
+  e.preventDefault();
+
+  this.toggle();
+  this.paused = Boolean(this.frame.video.paused);
+
+  if (e.target == replay) {
+    this.emit('replay');
+  }
+};
+
+/**
+ * `onmuteclick' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onmuteclick = function (e) {
+  var el = this.el.querySelector('.volume .control');
+  if (this.muted) {
+    el.classList.remove('muted');
+    this.muted = false;
+  } else {
+    el.classList.add('muted');
+    this.muted = true;
+  }
+};
+
+/**
+ * `onvolumefocus' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onvolumefocus = function (e) {
+};
+
+/**
+ * `onvolumeblur' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onvolumeblur = function (e) {
+};
+
+/**
+ * `onvolumeclick' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onvolumeclick = function (e) {
+  var panel = this.el.querySelector('.volume .panel');
+  var style = getComputedStyle(panel, null);
+  var x = e.offsetX;
+  var w = float(style.width);
+  var v = x / w;
+
+  if (panel.querySelector('.handle') == e.target) {
+    return false;
+  }
+
+  this.volume(v);
+};
+
+/**
+ * `onscrubclick' event handler
+ *
+ * @api private
+ * @param {Event} e
+ */
+
+Controls.prototype.onscrubclick = function (e) {
+  var x = e.offsetX;
+  var w = float(getComputedStyle(e.target.parentElement, null).width);
+  var d = this.frame.video.duration;
+  var p = x / w;
+  var s = d * p;
+
+  this.scrubbing = false;
+  this.seek(s);
+  if (true == this.paused) {
+    this.play();
+  }
+  this.emit('scrubend', e);
+};
+
+/**
+ * Plays the frame. Usually called from
+ * the `onplayclick' event handler
+ *
+ * @api public
+ * @param {Boolean} toggle
+ */
+
+Controls.prototype.play = function (toggle) {
+  this.el.querySelector('.play').classList.add('hidden');
+  this.el.querySelector('.replay').classList.add('hidden');
+  this.el.querySelector('.pause').classList.remove('hidden');
+  if (true != toggle) {
+    this.frame.play();
+    this.emit('play');
+  }
+  return this;
+};
+
+/**
+ * Pausesthe frame. Usually called from
+ * the `onplayclick' event handler
+ *
+ * @api public
+ * @param {Boolean} toggle
+ */
+Controls.prototype.pause = function (toggle) {
+  this.el.querySelector('.pause').classList.add('hidden');
+  this.el.querySelector('.play').classList.remove('hidden');
+  if (true != toggle) {
+    this.frame.pause();
+    this.emit('pause');
+  }
+  return this;
+};
+
+/**
+ * Toggles control playback
+ *
+ * @api public
+ */
+
+Controls.prototype.toggle = function (toggle) {
+  return (
+    this.frame.video.paused ?
+    this.play(toggle) : this.pause(toggle)
+  );
+};
+
+/**
+ * Show frame controls
+ *
+ * @api public
+ */
+
+Controls.prototype.show = function () {
+  this.el.style.display = 'block';
+  return this;
+};
+
+/*
+ * Hide frame controls
+ *
+ * @api public
+ */
+
+Controls.prototype.hide = function () {
+  this.el.style.display = 'none';
+  return this;
+};
+
+/**
+ * Set volume for video frame
+ *
+ * @api public
+ * @param {Number} vol
+ */
+
+Controls.prototype.volume = function (vol) {
+  this.frame.volume(vol);
+  return this;
+};
+
+/**
+ * Mute video frame
+ *
+ * @api public
+ */
+
+Controls.prototype.mute = function () {
+  this.frame.mute();
+  this.emit('mute');
+  return this;
+};
+
+/**
+ * Unmute video frame
+ *
+ * @api public
+ */
+
+Controls.prototype.unmute = function () {
+  this.frame.unmute();
+  this.emit('unmute');
+  return this;
+};
+
+/**
+ * Seek frame in seconds
+ *
+ * @api public
+ * @param {Number} seconds
+ */
+
+Controls.prototype.seek = function (seconds) {
+  this.emit('beforeseek', seconds);
+  this.frame.seek(seconds);
+  if (false == this.paused) {
+    this.play();
+  }
+  this.emit('seek', seconds);
+  return this;
+};
+
+/**
+ * Fast forward frame in seconds
+ *
+ * @api public
+ * @param {Number} seconds
+ */
+
+Controls.prototype.forward = function (seconds) {
+  this.frame.forward(seconds);
+  return this;
+};
+
+/**
+ * Rewind frame in seconds
+ *
+ * @api public
+ * @param {Number} seconds
+ */
+
+Controls.prototype.rewind = function (seconds) {
+  this.frame.rewind(seconds);
+  return this;
+};
+
+/**
+ * Installs plugin
+ *
+ * @api public
+ * @param {Function} fn
+ */
+
+Controls.prototype.use = function (fn) {
+  if (this.ready) {
+    fn(this);
+  } else {
+    this.on('ready', function () {
+      fn(this);
+    });
+  }
+  return this;
+};
+
+/**
+ * Show controls
+ *
+ * @api public
+ */
+
+Controls.prototype.show = function () {
+  var self = this;
+  raf(function () {
+    self.el.classList.remove('hidden');
+    self.el.classList.add('fadeIn');
+    self.el.classList.remove('fadeOut');
+    self.emit('show');
+  });
+  return this;
+};
+
+/**
+ * Hide controls
+ *
+ * @api public
+ */
+
+Controls.prototype.hide = function () {
+  var self = this;
+  raf(function () {
+    self.el.classList.remove('fadeIn');
+    self.el.classList.add('fadeOut');
+
+    // defer hiding visiblity for animations
+    setTimeout(function () {
+      self.el.classList.add('hidden');
+      self.emit('hide');
+    });
+  });
+  return this;
+};
+
+});
+
+require.define("littlstar~slant-controls@0.1.3/template.html", "\n<section class=\"slant controls fadeIn\">\n  <ul>\n    <li class=\"playpause\">\n      <a href=\"#\" class=\"play fadeIn\">&#9654;</a>\n      <a href=\"#\" class=\"pause fadeIn hidden\">&#9612;&#9612;</a>\n      <a href=\"#\" class=\"replay fadeIn hidden\">&#10227;</a>\n    </li>\n\n    <li class=\"progress\">\n      <div class=\"bar\">\n        <span class=\"played\"></span>\n        <span class=\"loaded\"></span>\n      </div>\n      <span class=\"scrub fadeIn\">&nbsp;</span>\n    </li>\n\n    <li class=\"time\">\n      <span class=\"current\">00:00</span>\n      <span class=\"separator\">/</span>\n      <span class=\"duration\">00:00</span>\n    </li>\n\n    <li class=\"volume\">\n      <!--span class=\"control\">vol</span-->\n      <div class=\"panel fadeIn\">\n        <div class=\"slider\">\n          <span class=\"level\"></span>\n          <span class=\"handle\">&nbsp;</span>\n        </div>\n      </div>\n    </li>\n  </ul>\n</section>\n");
 
 require.register("littlstar~slant-player@0.0.3", function (exports, module) {
 
