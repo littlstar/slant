@@ -37171,7 +37171,7 @@ module.exports = (function() {
 
 });
 
-require.register("littlstar~slant-frame@0.1.2", function (exports, module) {
+require.register("littlstar~slant-frame@0.1.3", function (exports, module) {
 
 /**
  * Module dependencies
@@ -37183,13 +37183,13 @@ var three = require('components~three.js@0.0.69')
   , events = require('component~events@1.0.9')
   , raf = require('component~raf@1.2.0')
   , hasWebGL = require('jb55~has-webgl@v0.0.1')
-  , tpl = require('littlstar~slant-frame@0.1.2/template.html')
+  , tpl = require('littlstar~slant-frame@0.1.3/template.html')
 
 // default field of view
 var DEFAULT_FOV = 35;
 
 // frame click threshold
-var FRAME_CLICK_THRESHOLD = 200;
+var FRAME_CLICK_THRESHOLD = 250;
 
 /**
  * `Frame' constructor
@@ -37802,7 +37802,7 @@ Frame.prototype.draw = function () {
 
 Frame.prototype.render = function () {
   var self = this;
-  var style = getComputedStyle(this.parent).width;
+  var style = getComputedStyle(this.parent);
   var fov = this.state.fov;
   var height = this.state.height || parseFloat(style.height);
   var width = this.state.width || parseFloat(style.width);
@@ -37890,7 +37890,7 @@ Frame.prototype.width = function (width) {
 
 });
 
-require.define("littlstar~slant-frame@0.1.2/template.html", "<section class=\"slant frame\">\n  <div class=\"slant container\">\n    <video class=\"slant\"></video>\n  </div>\n</section>\n");
+require.define("littlstar~slant-frame@0.1.3/template.html", "<section class=\"slant frame\">\n  <div class=\"slant container\">\n    <video class=\"slant\"></video>\n  </div>\n</section>\n");
 
 require.register("littlstar~slant-player@0.0.3", function (exports, module) {
 
@@ -37900,7 +37900,7 @@ require.register("littlstar~slant-player@0.0.3", function (exports, module) {
 
 var tpl = require('littlstar~slant-player@0.0.3/template.html')
   , dom = require('component~domify@1.3.1')
-  , Frame = require('littlstar~slant-frame@0.1.2')
+  , Frame = require('littlstar~slant-frame@0.1.3')
   , Controls = require('littlstar~slant-controls@0.1.3')
   , emitter = require('component~emitter@1.1.3')
 
@@ -38792,8 +38792,8 @@ SlantVideo.prototype.render = function () {
     this.opts = this.opts || {};
     this.opts.frame = this.opts.frame || {};
 
-    this.opts.width = this.width();
-    this.opts.height = this.height();
+    this.opts.width = this.opts.width || this.width();
+    this.opts.height = this.opts.height || this.height();
 
     this.player = new Player(this.el, this.opts);
     this.player.frame.on('ready', function () {

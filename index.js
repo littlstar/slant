@@ -87,8 +87,8 @@ SlantVideo.prototype.render = function () {
     this.opts = this.opts || {};
     this.opts.frame = this.opts.frame || {};
 
-    this.opts.width = this.width();
-    this.opts.height = this.height();
+    this.opts.width = this.opts.width || this.width();
+    this.opts.height = this.opts.height || this.height();
 
     this.player = new Player(this.el, this.opts);
     this.player.frame.on('ready', function () {
