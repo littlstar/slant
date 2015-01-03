@@ -1,30 +1,4 @@
 
-.slant.frame {
-  position: relative;
-  margin: 0;
-  padding: 0;
-}
-
-.slant.frame .container {
-  display: block;
-  position: relative;
-  margin: 0;
-  padding: 0;
-}
-
-.slant.frame video {
-  display: none;
-}
-
-.slant.frame canvas {
-  display: block;
-  position: relative;
-  margin: 0 auto;
-  padding: 0;
-}
-
-
-
 @-webkit-keyframes fadeIn {
     0% { opacity: 0; }
   100% { opacity: 1; }
@@ -316,6 +290,32 @@
   cursor: pointer;
 }
 
+
+
+
+.slant.frame {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.slant.frame .container {
+  display: block;
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.slant.frame video {
+  display: none;
+}
+
+.slant.frame canvas {
+  display: block;
+  position: relative;
+  margin: 0 auto;
+  padding: 0;
+}
 
 
 
